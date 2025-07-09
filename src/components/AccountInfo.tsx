@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { showMessage } from "react-native-flash-message";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { useAuthorization } from "../hooks/useAuthorization";
 import { useConnection } from "../hooks/useConnection";
@@ -37,10 +38,20 @@ export function AccountInfo() {
       await connection.confirmTransaction(signature, "confirmed");
       await fetchBalance();
 
-      Alert.alert("Success", "Airdrop completed successfully!");
+      showMessage({
+        message: "Success",
+        description: "Airdrop completed successfully!",
+        type: "success",
+        duration: 3000,
+      });
     } catch (error) {
       console.error("Airdrop failed:", error);
-      Alert.alert("Error", "Airdrop failed. Please try again.");
+      showMessage({
+        message: "Error",
+        description: "Airdrop failed. Please try again.",
+        type: "danger",
+        duration: 3000,
+      });
     } finally {
       setIsLoading(false);
     }

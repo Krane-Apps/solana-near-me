@@ -12,6 +12,9 @@ import {
 } from './services';
 import { Merchant } from '../data/merchants';
 
+// Add a small delay to ensure Firebase is initialized
+const FIREBASE_INIT_DELAY = 100;
+
 // Hook for merchants
 export const useMerchants = () => {
   const [merchants, setMerchants] = useState<Merchant[]>([]);
@@ -22,9 +25,15 @@ export const useMerchants = () => {
     const fetchMerchants = async () => {
       try {
         setLoading(true);
+        setError(null);
+        
+        // Small delay to ensure Firebase is ready
+        await new Promise(resolve => setTimeout(resolve, FIREBASE_INIT_DELAY));
+        
         const data = await MerchantService.getAllMerchants();
         setMerchants(data);
       } catch (err) {
+        console.error('Error fetching merchants:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch merchants');
       } finally {
         setLoading(false);
@@ -37,9 +46,11 @@ export const useMerchants = () => {
   const refetch = async () => {
     try {
       setLoading(true);
+      setError(null);
       const data = await MerchantService.getAllMerchants();
       setMerchants(data);
     } catch (err) {
+      console.error('Error refetching merchants:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch merchants');
     } finally {
       setLoading(false);
@@ -64,9 +75,15 @@ export const useUser = (walletAddress: string | null) => {
 
       try {
         setLoading(true);
+        setError(null);
+        
+        // Small delay to ensure Firebase is ready
+        await new Promise(resolve => setTimeout(resolve, FIREBASE_INIT_DELAY));
+        
         const userData = await UserService.getOrCreateUser(walletAddress);
         setUser(userData);
       } catch (err) {
+        console.error('Error fetching user:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch user');
       } finally {
         setLoading(false);
@@ -87,6 +104,7 @@ export const useUser = (walletAddress: string | null) => {
       await UserService.updateUserStats(user.id, updates);
       setUser(prev => prev ? { ...prev, ...updates } : null);
     } catch (err) {
+      console.error('Error updating user stats:', err);
       setError(err instanceof Error ? err.message : 'Failed to update user');
     }
   };
@@ -109,9 +127,15 @@ export const useUserTransactions = (userId: string | null) => {
 
       try {
         setLoading(true);
+        setError(null);
+        
+        // Small delay to ensure Firebase is ready
+        await new Promise(resolve => setTimeout(resolve, FIREBASE_INIT_DELAY));
+        
         const data = await TransactionService.getUserTransactions(userId);
         setTransactions(data);
       } catch (err) {
+        console.error('Error fetching transactions:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch transactions');
       } finally {
         setLoading(false);
@@ -128,6 +152,7 @@ export const useUserTransactions = (userId: string | null) => {
       setTransactions(prev => [newTransaction, ...prev]);
       return id;
     } catch (err) {
+      console.error('Error adding transaction:', err);
       setError(err instanceof Error ? err.message : 'Failed to add transaction');
       throw err;
     }
@@ -151,9 +176,15 @@ export const useUserRewards = (userId: string | null) => {
 
       try {
         setLoading(true);
+        setError(null);
+        
+        // Small delay to ensure Firebase is ready
+        await new Promise(resolve => setTimeout(resolve, FIREBASE_INIT_DELAY));
+        
         const data = await RewardService.getUserRewards(userId);
         setRewards(data);
       } catch (err) {
+        console.error('Error fetching rewards:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch rewards');
       } finally {
         setLoading(false);
@@ -170,6 +201,7 @@ export const useUserRewards = (userId: string | null) => {
       setRewards(prev => [newReward, ...prev]);
       return id;
     } catch (err) {
+      console.error('Error adding reward:', err);
       setError(err instanceof Error ? err.message : 'Failed to add reward');
       throw err;
     }
@@ -188,9 +220,15 @@ export const useAchievements = () => {
     const fetchAchievements = async () => {
       try {
         setLoading(true);
+        setError(null);
+        
+        // Small delay to ensure Firebase is ready
+        await new Promise(resolve => setTimeout(resolve, FIREBASE_INIT_DELAY));
+        
         const data = await AchievementService.getAllAchievements();
         setAchievements(data);
       } catch (err) {
+        console.error('Error fetching achievements:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch achievements');
       } finally {
         setLoading(false);

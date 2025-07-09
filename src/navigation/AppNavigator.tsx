@@ -10,6 +10,7 @@ import PaymentScreen from "../screens/PaymentScreen";
 import PaymentSuccessScreen from "../screens/PaymentSuccessScreen";
 import RewardScreen from "../screens/RewardScreen";
 import MerchantRegistrationScreen from "../screens/MerchantRegistrationScreen";
+import { UserProfileScreen } from "../screens/UserProfileScreen";
 
 export type RootStackParamList = {
   Welcome: undefined;
@@ -30,6 +31,7 @@ export type RootStackParamList = {
   };
   Reward: undefined;
   MerchantRegistration: undefined;
+  UserProfile: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -73,8 +75,7 @@ export const AppNavigator: React.FC = () => {
           name="Payment"
           component={PaymentScreen}
           options={{
-            title: "Payment",
-            headerBackTitle: "Back",
+            headerShown: false,
           }}
         />
         <Stack.Screen
@@ -89,8 +90,7 @@ export const AppNavigator: React.FC = () => {
           name="Reward"
           component={RewardScreen}
           options={{
-            title: "Reward",
-            headerLeft: () => null, // Prevent going back
+            headerShown: false,
           }}
         />
         <Stack.Screen
@@ -99,6 +99,13 @@ export const AppNavigator: React.FC = () => {
           options={{
             title: "Register Business",
             headerBackTitle: "Back",
+          }}
+        />
+        <Stack.Screen
+          name="UserProfile"
+          component={UserProfileScreen}
+          options={{
+            headerShown: false,
           }}
         />
       </Stack.Navigator>

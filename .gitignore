@@ -68,3 +68,12 @@ logs/
 # Cache directories
 .cache/
 .parcel-cache/
+
+# API Keys and sensitive files (for future protection)
+# Note: These files already contain API keys from previous commits
+# Consider rotating keys and using environment variables
+google-services.json
+.env
+.env.local
+.env.production
+.env.staging

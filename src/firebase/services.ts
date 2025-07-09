@@ -1,4 +1,14 @@
-import firestore from '@react-native-firebase/firestore';
+import firestore, { 
+  collection, 
+  addDoc, 
+  getDocs, 
+  doc, 
+  getDoc, 
+  updateDoc, 
+  query, 
+  where, 
+  orderBy
+} from '@react-native-firebase/firestore';
 import { db, COLLECTIONS } from './config';
 import { Merchant } from '../data/merchants';
 
@@ -49,13 +59,25 @@ export interface Achievement {
   rarity: 'common' | 'rare' | 'epic' | 'legendary';
 }
 
+// Helper function to clean undefined values
+const cleanData = (data: any): any => {
+  const cleaned: any = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (value !== undefined) {
+      cleaned[key] = value;
+    }
+  }
+  return cleaned;
+};
+
 // Merchant Services
 export const MerchantService = {
   // Get all merchants
   async getAllMerchants(): Promise<Merchant[]> {
     try {
-      const snapshot = await db.collection(COLLECTIONS.MERCHANTS).get();
-      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Merchant));
+      const merchantsCollection = collection(db, COLLECTIONS.MERCHANTS);
+      const snapshot = await getDocs(merchantsCollection);
+      return snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() } as Merchant));
     } catch (error) {
       console.error('Error fetching merchants:', error);
       throw error;
@@ -65,9 +87,10 @@ export const MerchantService = {
   // Get merchant by ID
   async getMerchantById(id: string): Promise<Merchant | null> {
     try {
-      const doc = await db.collection(COLLECTIONS.MERCHANTS).doc(id).get();
-      if (doc.exists) {
-        return { id: doc.id, ...doc.data() } as Merchant;
+      const merchantDoc = doc(db, COLLECTIONS.MERCHANTS, id);
+      const docSnap = await getDoc(merchantDoc);
+      if (docSnap.exists()) {
+        return { id: docSnap.id, ...docSnap.data() } as Merchant;
       }
       return null;
     } catch (error) {
@@ -79,7 +102,9 @@ export const MerchantService = {
   // Add new merchant
   async addMerchant(merchant: Omit<Merchant, 'id'>): Promise<string> {
     try {
-      const docRef = await db.collection(COLLECTIONS.MERCHANTS).add(merchant);
+      const merchantsCollection = collection(db, COLLECTIONS.MERCHANTS);
+      const cleanedMerchant = cleanData(merchant);
+      const docRef = await addDoc(merchantsCollection, cleanedMerchant);
       return docRef.id;
     } catch (error) {
       console.error('Error adding merchant:', error);
@@ -90,7 +115,9 @@ export const MerchantService = {
   // Update merchant
   async updateMerchant(id: string, updates: Partial<Merchant>): Promise<void> {
     try {
-      await db.collection(COLLECTIONS.MERCHANTS).doc(id).update(updates);
+      const merchantDoc = doc(db, COLLECTIONS.MERCHANTS, id);
+      const cleanedUpdates = cleanData(updates);
+      await updateDoc(merchantDoc, cleanedUpdates);
     } catch (error) {
       console.error('Error updating merchant:', error);
       throw error;
@@ -103,10 +130,12 @@ export const TransactionService = {
   // Add new transaction
   async addTransaction(transaction: Omit<Transaction, 'id'>): Promise<string> {
     try {
-      const docRef = await db.collection(COLLECTIONS.TRANSACTIONS).add({
-        ...transaction,
+      const transactionsCollection = collection(db, COLLECTIONS.TRANSACTIONS);
+      const transactionData = {
+        ...cleanData(transaction),
         timestamp: new Date().toISOString(),
-      });
+      };
+      const docRef = await addDoc(transactionsCollection, transactionData);
       return docRef.id;
     } catch (error) {
       console.error('Error adding transaction:', error);
@@ -117,11 +146,13 @@ export const TransactionService = {
   // Get user transactions
   async getUserTransactions(userId: string): Promise<Transaction[]> {
     try {
-      const snapshot = await db
-        .collection(COLLECTIONS.TRANSACTIONS)
-        .where('userId', '==', userId)
-        .orderBy('timestamp', 'desc')
-        .get();
+      const transactionsCollection = collection(db, COLLECTIONS.TRANSACTIONS);
+      const q = query(
+        transactionsCollection,
+        where('userId', '==', userId),
+        orderBy('timestamp', 'desc')
+      );
+      const snapshot = await getDocs(q);
       
       return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction));
     } catch (error) {
@@ -133,7 +164,8 @@ export const TransactionService = {
   // Update transaction status
   async updateTransactionStatus(id: string, status: Transaction['status']): Promise<void> {
     try {
-      await db.collection(COLLECTIONS.TRANSACTIONS).doc(id).update({ status });
+      const transactionDoc = doc(db, COLLECTIONS.TRANSACTIONS, id);
+      await updateDoc(transactionDoc, { status });
     } catch (error) {
       console.error('Error updating transaction status:', error);
       throw error;
@@ -143,11 +175,13 @@ export const TransactionService = {
   // Get merchant transactions
   async getMerchantTransactions(merchantId: string): Promise<Transaction[]> {
     try {
-      const snapshot = await db
-        .collection(COLLECTIONS.TRANSACTIONS)
-        .where('merchantId', '==', merchantId)
-        .orderBy('timestamp', 'desc')
-        .get();
+      const transactionsCollection = collection(db, COLLECTIONS.TRANSACTIONS);
+      const q = query(
+        transactionsCollection,
+        where('merchantId', '==', merchantId),
+        orderBy('timestamp', 'desc')
+      );
+      const snapshot = await getDocs(q);
       
       return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction));
     } catch (error) {
@@ -162,14 +196,13 @@ export const UserService = {
   // Get or create user
   async getOrCreateUser(walletAddress: string): Promise<User> {
     try {
-      const snapshot = await db
-        .collection(COLLECTIONS.USERS)
-        .where('walletAddress', '==', walletAddress)
-        .get();
+      const usersCollection = collection(db, COLLECTIONS.USERS);
+      const q = query(usersCollection, where('walletAddress', '==', walletAddress));
+      const snapshot = await getDocs(q);
 
       if (!snapshot.empty) {
-        const doc = snapshot.docs[0];
-        return { id: doc.id, ...doc.data() } as User;
+        const docSnap = snapshot.docs[0];
+        return { id: docSnap.id, ...docSnap.data() } as User;
       }
 
       // Create new user
@@ -184,7 +217,7 @@ export const UserService = {
         nftBadges: [],
       };
 
-      const docRef = await db.collection(COLLECTIONS.USERS).add(newUser);
+      const docRef = await addDoc(usersCollection, newUser);
       return { id: docRef.id, ...newUser };
     } catch (error) {
       console.error('Error getting/creating user:', error);
@@ -203,10 +236,9 @@ export const UserService = {
     }
   ): Promise<void> {
     try {
-      await db.collection(COLLECTIONS.USERS).doc(userId).update({
-        ...updates,
-        lastActiveAt: new Date().toISOString(),
-      });
+      const userDoc = doc(db, COLLECTIONS.USERS, userId);
+      const cleanedUpdates = cleanData(updates);
+      await updateDoc(userDoc, cleanedUpdates);
     } catch (error) {
       console.error('Error updating user stats:', error);
       throw error;
@@ -216,9 +248,18 @@ export const UserService = {
   // Add achievement to user
   async addAchievement(userId: string, achievementId: string): Promise<void> {
     try {
-      await db.collection(COLLECTIONS.USERS).doc(userId).update({
-        achievements: firestore.FieldValue.arrayUnion(achievementId),
-      });
+      const userDoc = doc(db, COLLECTIONS.USERS, userId);
+      const userSnap = await getDoc(userDoc);
+      
+      if (userSnap.exists()) {
+        const userData = userSnap.data() as User;
+        const achievements = userData.achievements || [];
+        
+        if (!achievements.includes(achievementId)) {
+          achievements.push(achievementId);
+          await updateDoc(userDoc, { achievements });
+        }
+      }
     } catch (error) {
       console.error('Error adding achievement:', error);
       throw error;
@@ -228,9 +269,18 @@ export const UserService = {
   // Add NFT badge to user
   async addNFTBadge(userId: string, badgeId: string): Promise<void> {
     try {
-      await db.collection(COLLECTIONS.USERS).doc(userId).update({
-        nftBadges: firestore.FieldValue.arrayUnion(badgeId),
-      });
+      const userDoc = doc(db, COLLECTIONS.USERS, userId);
+      const userSnap = await getDoc(userDoc);
+      
+      if (userSnap.exists()) {
+        const userData = userSnap.data() as User;
+        const nftBadges = userData.nftBadges || [];
+        
+        if (!nftBadges.includes(badgeId)) {
+          nftBadges.push(badgeId);
+          await updateDoc(userDoc, { nftBadges });
+        }
+      }
     } catch (error) {
       console.error('Error adding NFT badge:', error);
       throw error;
@@ -240,13 +290,15 @@ export const UserService = {
 
 // Reward Services
 export const RewardService = {
-  // Add reward
+  // Add new reward
   async addReward(reward: Omit<Reward, 'id'>): Promise<string> {
     try {
-      const docRef = await db.collection(COLLECTIONS.REWARDS).add({
-        ...reward,
+      const rewardsCollection = collection(db, COLLECTIONS.REWARDS);
+      const rewardData = {
+        ...cleanData(reward),
         timestamp: new Date().toISOString(),
-      });
+      };
+      const docRef = await addDoc(rewardsCollection, rewardData);
       return docRef.id;
     } catch (error) {
       console.error('Error adding reward:', error);
@@ -257,11 +309,13 @@ export const RewardService = {
   // Get user rewards
   async getUserRewards(userId: string): Promise<Reward[]> {
     try {
-      const snapshot = await db
-        .collection(COLLECTIONS.REWARDS)
-        .where('userId', '==', userId)
-        .orderBy('timestamp', 'desc')
-        .get();
+      const rewardsCollection = collection(db, COLLECTIONS.REWARDS);
+      const q = query(
+        rewardsCollection,
+        where('userId', '==', userId),
+        orderBy('timestamp', 'desc')
+      );
+      const snapshot = await getDocs(q);
       
       return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Reward));
     } catch (error) {
@@ -270,18 +324,19 @@ export const RewardService = {
     }
   },
 
-  // Calculate cashback reward
+  // Calculate cashback amount
   calculateCashback(usdAmount: number, rate: number = 0.01): number {
-    return usdAmount * rate;
+    return Math.round(usdAmount * rate * 100) / 100; // Round to 2 decimal places
   },
 };
 
 // Achievement Services
 export const AchievementService = {
-  // Add achievement
+  // Add new achievement
   async addAchievement(achievement: Omit<Achievement, 'id'>): Promise<string> {
     try {
-      const docRef = await db.collection(COLLECTIONS.ACHIEVEMENTS).add(achievement);
+      const achievementsCollection = collection(db, COLLECTIONS.ACHIEVEMENTS);
+      const docRef = await addDoc(achievementsCollection, achievement);
       return docRef.id;
     } catch (error) {
       console.error('Error adding achievement:', error);
@@ -292,7 +347,8 @@ export const AchievementService = {
   // Get all achievements
   async getAllAchievements(): Promise<Achievement[]> {
     try {
-      const snapshot = await db.collection(COLLECTIONS.ACHIEVEMENTS).get();
+      const achievementsCollection = collection(db, COLLECTIONS.ACHIEVEMENTS);
+      const snapshot = await getDocs(achievementsCollection);
       return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Achievement));
     } catch (error) {
       console.error('Error fetching achievements:', error);
@@ -300,7 +356,7 @@ export const AchievementService = {
     }
   },
 
-  // Check and award achievements
+  // Check and award achievements based on user activity
   async checkAchievements(user: User): Promise<string[]> {
     try {
       const achievements = await this.getAllAchievements();
@@ -308,26 +364,27 @@ export const AchievementService = {
 
       for (const achievement of achievements) {
         if (!user.achievements.includes(achievement.id)) {
-          let earned = false;
+          let shouldAward = false;
 
+          // Simple achievement logic - can be expanded
           switch (achievement.id) {
             case 'first_payment':
-              earned = user.paymentCount >= 1;
+              shouldAward = user.paymentCount >= 1;
               break;
             case 'crypto_enthusiast':
-              earned = user.paymentCount >= 10;
+              shouldAward = user.paymentCount >= 5;
               break;
             case 'local_explorer':
-              earned = user.paymentCount >= 5; // Could be based on unique merchants
+              shouldAward = user.paymentCount >= 10;
               break;
             case 'weekly_warrior':
-              earned = user.paymentCount >= 7; // Could be based on consecutive days
+              shouldAward = user.paymentCount >= 7;
               break;
             default:
-              earned = false;
+              shouldAward = user.paymentCount >= achievement.requirement;
           }
 
-          if (earned) {
+          if (shouldAward) {
             await UserService.addAchievement(user.id, achievement.id);
             newAchievements.push(achievement.id);
           }
@@ -337,7 +394,7 @@ export const AchievementService = {
       return newAchievements;
     } catch (error) {
       console.error('Error checking achievements:', error);
-      throw error;
+      return [];
     }
   },
 };

@@ -7,107 +7,133 @@ Building a mobile app with Solana Mobile Stack for the hackathon that enables us
 - **Color Scheme**: Purple #9945FF (primary), Teal #00FFA3 (accent), White #FFFFFF (text)
 - **Design Inspiration**: Google Pay's minimal, card-based UI with dark theme
 - **Framework**: React Native with Solana Mobile Wallet Adapter
+- **Backend**: Firebase Firestore for data persistence
 
 ## Core Features & Tasks
 
-### 1. UI/UX Foundation
-- [ ] **Task 1.1**: Create Solana-branded theme system with color constants
-- [ ] **Task 1.2**: Design reusable UI components (buttons, cards, inputs)
-- [ ] **Task 1.3**: Implement dark theme with purple background
-- [ ] **Task 1.4**: Create app navigation structure
+### 1. UI/UX Foundation ✅ COMPLETED
+- [x] **Task 1.1**: Create Solana-branded theme system with color constants
+- [x] **Task 1.2**: Design reusable UI components (buttons, cards, inputs)
+- [x] **Task 1.3**: Implement dark theme with purple background
+- [x] **Task 1.4**: Create app navigation structure
 
-### 2. Welcome & Onboarding
-- [ ] **Task 2.1**: Create welcome screen with Solana logo
-- [ ] **Task 2.2**: Add "Start" button (teal) with navigation to map
-- [ ] **Task 2.3**: Implement mock authentication (assume wallet connected)
+### 2. Welcome & Onboarding ✅ COMPLETED
+- [x] **Task 2.1**: Create welcome screen with Solana logo
+- [x] **Task 2.2**: Add "Start" button (teal) with navigation to map
+- [x] **Task 2.3**: Implement mock authentication (assume wallet connected)
 
-### 3. Map View & Merchant Display
-- [ ] **Task 3.1**: Install and configure react-native-maps
-- [ ] **Task 3.2**: Create hardcoded merchant data for Bangalore (5-10 locations)
-- [ ] **Task 3.3**: Display map with purple background theme
-- [ ] **Task 3.4**: Add teal markers for merchant locations
-- [ ] **Task 3.5**: Implement search bar functionality
-- [ ] **Task 3.6**: Add merchant category filtering
+### 3. Map View & Merchant Display ✅ COMPLETED
+- [x] **Task 3.1**: Install and configure react-native-maps
+- [x] **Task 3.2**: Create hardcoded merchant data for Bangalore (5-10 locations)
+- [x] **Task 3.3**: Display map with purple background theme
+- [x] **Task 3.4**: Add teal markers for merchant locations
+- [x] **Task 3.5**: Implement search bar functionality
+- [x] **Task 3.6**: Add merchant category filtering
 
-### 4. Merchant Details
-- [ ] **Task 4.1**: Create merchant detail card component
-- [ ] **Task 4.2**: Implement slide-up animation for merchant details
-- [ ] **Task 4.3**: Display merchant name, address, category
-- [ ] **Task 4.4**: Add teal "Pay" button
-- [ ] **Task 4.5**: Style card with white background and purple border
+### 4. Merchant Details ✅ COMPLETED
+- [x] **Task 4.1**: Create merchant detail card component
+- [x] **Task 4.2**: Implement slide-up animation for merchant details
+- [x] **Task 4.3**: Display merchant name, address, category
+- [x] **Task 4.4**: Add teal "Pay" button
+- [x] **Task 4.5**: Style card with white background and purple border
 
-### 5. Payment Flow
-- [ ] **Task 5.1**: Create payment screen with amount input
-- [ ] **Task 5.2**: Implement SOL/USDC toggle functionality
-- [ ] **Task 5.3**: Add mock SOL-to-USDC conversion rate display
-- [ ] **Task 5.4**: Create "Confirm" button (teal) with styling
-- [ ] **Task 5.5**: Implement mock transaction signing flow
-- [ ] **Task 5.6**: Create payment success confirmation screen
+### 5. Payment Flow ✅ COMPLETED
+- [x] **Task 5.1**: Create payment screen with amount input
+- [x] **Task 5.2**: Implement SOL/USDC toggle functionality
+- [x] **Task 5.3**: Add mock SOL-to-USDC conversion rate display
+- [x] **Task 5.4**: Create "Confirm" button (teal) with styling
+- [x] **Task 5.5**: Implement mock transaction signing flow
+- [x] **Task 5.6**: Create payment success confirmation screen
 
-### 6. Rewards System
-- [ ] **Task 6.1**: Design reward card component
-- [ ] **Task 6.2**: Implement reward animation (slide/fade in)
-- [ ] **Task 6.3**: Create mock rewards (test SOL, NFT badges)
-- [ ] **Task 6.4**: Add reward display after successful payment
-- [ ] **Task 6.5**: Style reward screen with purple background
+### 6. Rewards System ✅ COMPLETED
+- [x] **Task 6.1**: Design reward card component
+- [x] **Task 6.2**: Implement reward animation (slide/fade in)
+- [x] **Task 6.3**: Create mock rewards (test SOL, NFT badges)
+- [x] **Task 6.4**: Add reward display after successful payment
+- [x] **Task 6.5**: Style reward screen with purple background
 
-### 7. Merchant Registration
-- [ ] **Task 7.1**: Create hamburger menu on map screen
-- [ ] **Task 7.2**: Add "Register Business" option in menu
-- [ ] **Task 7.3**: Create merchant registration form
-- [ ] **Task 7.4**: Add form fields (name, address, category, wallet)
-- [ ] **Task 7.5**: Implement "Submit" button (teal) functionality
-- [ ] **Task 7.6**: Create "under review" confirmation message
+### 7. Firebase Integration ✅ COMPLETED
+- [x] **Task 7.1**: Install Firebase dependencies and configure project
+- [x] **Task 7.2**: Create Firebase services for CRUD operations
+- [x] **Task 7.3**: Implement React hooks for Firebase integration
+- [x] **Task 7.4**: Integrate payment flow with Firebase transaction storage
+- [x] **Task 7.5**: Update all screens to use Firebase data
+- [x] **Task 7.6**: Create data seeding functionality
 
-### 8. Mock Data & Integration
-- [ ] **Task 8.1**: Create mock merchant database with Bangalore locations
-- [ ] **Task 8.2**: Add realistic merchant categories (cafes, tech shops, etc.)
-- [ ] **Task 8.3**: Implement mock transaction history
-- [ ] **Task 8.4**: Create mock reward calculation logic
+### 8. New Requirements 🚧 IN PROGRESS
+- [ ] **Task 8.1**: Add connect wallet button in top right corner of map screen
+- [ ] **Task 8.2**: Create user profile screen accessible when wallet is connected
+- [ ] **Task 8.3**: Request location permission on app start
+- [ ] **Task 8.4**: Show nearby merchants based on user location
+- [ ] **Task 8.5**: Update merchant registration with wallet address field
+- [ ] **Task 8.6**: Use current location coordinates for merchant registration
+- [ ] **Task 8.7**: Store merchant registration data in Firebase
 
-### 9. Enhanced UX Features
-- [ ] **Task 9.1**: Add loading states for all interactions
-- [ ] **Task 9.2**: Implement error handling and user feedback
-- [ ] **Task 9.3**: Add haptic feedback for button interactions
-- [ ] **Task 9.4**: Create smooth transitions between screens
+### 9. Merchant Registration Enhancement 🚧 PENDING
+- [ ] **Task 9.1**: Create enhanced merchant registration form
+- [ ] **Task 9.2**: Add wallet address input field
+- [ ] **Task 9.3**: Auto-populate location from device GPS
+- [ ] **Task 9.4**: Validate wallet address format
+- [ ] **Task 9.5**: Store registration in Firebase with approval status
+- [ ] **Task 9.6**: Create admin approval workflow
 
-### 10. Demo Preparation
-- [ ] **Task 10.1**: Create demo flow script
-- [ ] **Task 10.2**: Add demo data that showcases all features
-- [ ] **Task 10.3**: Optimize app performance for smooth demo
-- [ ] **Task 10.4**: Test complete user journey end-to-end
+### 10. Location Services 🚧 PENDING
+- [ ] **Task 10.1**: Install react-native-geolocation-service
+- [ ] **Task 10.2**: Request location permissions on app start
+- [ ] **Task 10.3**: Calculate distance between user and merchants
+- [ ] **Task 10.4**: Sort merchants by proximity
+- [ ] **Task 10.5**: Add distance display in merchant cards
 
-## Implementation Priority
+### 11. User Profile & Wallet Integration 🚧 PENDING
+- [ ] **Task 11.1**: Create user profile screen
+- [ ] **Task 11.2**: Display wallet address and balance
+- [ ] **Task 11.3**: Show transaction history
+- [ ] **Task 11.4**: Display earned rewards and achievements
+- [ ] **Task 11.5**: Add wallet connection/disconnection functionality
 
-### Phase 1: Core Foundation (Days 1-2)
-- Tasks 1.1-1.4: UI/UX Foundation
-- Tasks 2.1-2.3: Welcome & Onboarding
-- Tasks 3.1-3.4: Basic Map View
+### 12. Documentation 🚧 PENDING
+- [ ] **Task 12.1**: Create detailed Firebase database structure documentation
+- [ ] **Task 12.2**: Document API endpoints and data models
+- [ ] **Task 12.3**: Create deployment and setup guide
+- [ ] **Task 12.4**: Document security rules and best practices
 
-### Phase 2: Main Features (Days 3-4)
-- Tasks 3.5-3.6: Enhanced Map Features
-- Tasks 4.1-4.5: Merchant Details
-- Tasks 5.1-5.6: Payment Flow
+## Implementation Status
 
-### Phase 3: Additional Features (Days 5-6)
-- Tasks 6.1-6.5: Rewards System
-- Tasks 7.1-7.6: Merchant Registration
-- Tasks 8.1-8.4: Mock Data Integration
+### ✅ Completed Phases
+- **Phase 1**: UI/UX Foundation - Complete
+- **Phase 2**: Core Features (Map, Payment, Rewards) - Complete
+- **Phase 3**: Firebase Integration - Complete
 
-### Phase 4: Polish & Demo (Days 7-8)
-- Tasks 9.1-9.4: Enhanced UX
-- Tasks 10.1-10.4: Demo Preparation
+### 🚧 Current Phase: Enhanced Features
+- Location services integration
+- Wallet connection UI
+- Enhanced merchant registration
+- User profile management
 
-## Technical Considerations
+### 📋 Next Phase: Polish & Documentation
+- Complete database documentation
+- Performance optimization
+- Security hardening
+- Demo preparation
 
-### Dependencies to Add
-- `react-native-maps`: For map functionality
-- `react-native-vector-icons`: For UI icons
-- `react-native-reanimated`: For smooth animations
-- `@react-navigation/native`: For navigation (if not already included)
+## Technical Stack (Updated)
 
-### Mock Data Structure
+### Dependencies Added ✅
+- `@react-native-firebase/app`: Firebase core
+- `@react-native-firebase/firestore`: Database
+- `react-native-maps`: Map functionality
+- `react-native-vector-icons`: UI icons
+- `@react-navigation/native`: Navigation
+- `react-native-gesture-handler`: Gesture support
+
+### Dependencies Needed 🚧
+- `react-native-geolocation-service`: Location services
+- `@react-native-async-storage/async-storage`: Local storage
+- `react-native-permissions`: Permission handling
+
+### Firebase Collections Structure
 ```typescript
+// Merchants
 interface Merchant {
   id: string;
   name: string;
@@ -117,28 +143,54 @@ interface Merchant {
   longitude: number;
   walletAddress: string;
   acceptedTokens: string[];
+  isActive: boolean;
+  isApproved: boolean;
+  registeredAt: string;
+  approvedAt?: string;
+}
+
+// Users
+interface User {
+  id: string; // wallet address
+  walletAddress: string;
+  totalSpent: number;
+  totalRewards: number;
+  paymentCount: number;
+  joinedAt: string;
+  lastActiveAt: string;
+  achievements: string[];
+  nftBadges: string[];
+}
+
+// Transactions
+interface Transaction {
+  id: string;
+  merchantId: string;
+  merchantName: string;
+  userId: string;
+  usdAmount: number;
+  tokenAmount: number;
+  token: 'SOL' | 'USDC';
+  transactionId: string;
+  timestamp: string;
+  status: 'pending' | 'completed' | 'failed';
+  rewardAmount?: number;
 }
 ```
 
-### Key Screens to Implement
-1. Welcome Screen
-2. Map View (main screen)
-3. Merchant Details Modal
-4. Payment Screen
-5. Payment Success Screen
-6. Reward Screen
-7. Merchant Registration Form
-
-## Success Metrics for Demo
-- Complete user flow from map → merchant → payment → reward
-- 5-10 mock merchants displayed on Bangalore map
-- Smooth animations and transitions
-- Solana branding consistently applied
-- Mock SOL-to-USDC conversion working
-- Merchant registration flow functional
+## Success Metrics for Demo ✅
+- [x] Complete user flow from map → merchant → payment → reward
+- [x] 8 mock merchants displayed on Bangalore map with real Firebase data
+- [x] Smooth animations and transitions
+- [x] Solana branding consistently applied
+- [x] Real Firebase backend with transaction persistence
+- [x] Achievement system with progress tracking
+- [ ] Location-based merchant discovery
+- [ ] Wallet connection interface
+- [ ] Enhanced merchant registration
 
 ## Notes
-- Focus on UI/UX polish since this is for hackathon demo
-- All blockchain interactions are mocked for MVP
-- Prioritize visual appeal and smooth user experience
-- Ensure app works reliably on Android emulator for demo 
+- All core features are now complete with Firebase backend
+- Focus shifted to enhanced UX and location services
+- Real data persistence enables proper demo flow
+- Next priority: location services and wallet UI 

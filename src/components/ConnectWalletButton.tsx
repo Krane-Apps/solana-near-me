@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { TouchableOpacity, Text, StyleSheet, Alert } from "react-native";
+import { TouchableOpacity, Text, StyleSheet } from "react-native";
+import { showMessage } from "react-native-flash-message";
 import { useAuthorization } from "../hooks/useAuthorization";
 
 export function ConnectWalletButton() {
@@ -13,7 +14,12 @@ export function ConnectWalletButton() {
         await disconnect();
       } catch (error) {
         console.error("Failed to disconnect:", error);
-        Alert.alert("Error", "Failed to disconnect from wallet");
+        showMessage({
+          message: "Error",
+          description: "Failed to disconnect from wallet",
+          type: "danger",
+          duration: 3000,
+        });
       }
     } else {
       // Connect
@@ -22,7 +28,12 @@ export function ConnectWalletButton() {
         await connect();
       } catch (error) {
         console.error("Failed to connect:", error);
-        Alert.alert("Error", "Failed to connect to wallet");
+        showMessage({
+          message: "Error",
+          description: "Failed to connect to wallet",
+          type: "danger",
+          duration: 3000,
+        });
       } finally {
         setIsConnecting(false);
       }

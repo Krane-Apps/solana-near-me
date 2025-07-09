@@ -5,12 +5,12 @@ import {
   StyleSheet,
   SafeAreaView,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import { showMessage } from "react-native-flash-message";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RouteProp } from "@react-navigation/native";
 import { RootStackParamList } from "../navigation/AppNavigator";
@@ -18,6 +18,7 @@ import { Button, Card, TextInput } from "../components/ui";
 import { SolanaColors, Typography, Spacing, createShadow } from "../theme";
 import { mockMerchants, findMerchantById } from "../data/merchants";
 import { usePaymentProcessor, useUser } from "../firebase";
+import { useAuthorization } from "../hooks/useAuthorization";
 
 type PaymentScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -42,13 +43,18 @@ const PaymentScreen: React.FC<Props> = ({ navigation, route }) => {
   const [selectedToken, setSelectedToken] = useState<"SOL" | "USDC">("SOL");
   const [merchant, setMerchant] = useState(findMerchantById(merchantId));
 
+  // MWA hooks
+  const { authorization } = useAuthorization();
+
   // Firebase hooks
   const {
     processPayment,
     processing: firebaseProcessing,
     error: paymentError,
   } = usePaymentProcessor();
-  const { user, loading: userLoading } = useUser("mock-wallet-address"); // In real app, get from wallet adapter
+  const { user, loading: userLoading } = useUser(
+    authorization?.selectedAccount?.publicKey.toString() || null
+  );
 
   // Combined loading state
   const isProcessing = firebaseProcessing || userLoading;
@@ -60,7 +66,12 @@ const PaymentScreen: React.FC<Props> = ({ navigation, route }) => {
 
   useEffect(() => {
     if (paymentError) {
-      Alert.alert("Payment Error", paymentError);
+      showMessage({
+        message: "Payment Error",
+        description: paymentError,
+        type: "danger",
+        duration: 4000,
+      });
     }
   }, [paymentError]);
 
@@ -82,20 +93,32 @@ const PaymentScreen: React.FC<Props> = ({ navigation, route }) => {
 
   const handlePayment = async () => {
     if (!usdValue || usdValue <= 0) {
-      Alert.alert("Invalid Amount", "Please enter a valid payment amount.");
+      showMessage({
+        message: "Invalid Amount",
+        description: "Please enter a valid payment amount.",
+        type: "warning",
+        duration: 3000,
+      });
       return;
     }
 
     if (!merchant) {
-      Alert.alert("Error", "Merchant not found.");
+      showMessage({
+        message: "Error",
+        description: "Merchant not found.",
+        type: "danger",
+        duration: 3000,
+      });
       return;
     }
 
     if (!user) {
-      Alert.alert(
-        "Error",
-        "User not found. Please ensure your wallet is connected."
-      );
+      showMessage({
+        message: "Error",
+        description: "User not found. Please ensure your wallet is connected.",
+        type: "warning",
+        duration: 4000,
+      });
       return;
     }
 
@@ -131,10 +154,13 @@ const PaymentScreen: React.FC<Props> = ({ navigation, route }) => {
       navigation.replace("PaymentSuccess", paymentData);
     } catch (error) {
       console.error("Payment failed:", error);
-      Alert.alert(
-        "Payment Failed",
-        "There was an error processing your payment. Please try again."
-      );
+      showMessage({
+        message: "Payment Failed",
+        description:
+          "There was an error processing your payment. Please try again.",
+        type: "danger",
+        duration: 4000,
+      });
     }
   };
 
@@ -214,19 +240,38 @@ const PaymentScreen: React.FC<Props> = ({ navigation, route }) => {
             <View style={styles.placeholder} />
           </View>
 
-          {/* User Info (if available) */}
-          {user && (
-            <Card style={styles.userCard}>
-              <Text style={styles.userTitle}>Paying with</Text>
-              <Text style={styles.userAddress}>
-                {user.walletAddress.slice(0, 8)}...
-                {user.walletAddress.slice(-8)}
+          {/* Wallet Connection Status */}
+          {!authorization?.selectedAccount ? (
+            <Card style={styles.walletCard}>
+              <Text style={styles.walletTitle}>Wallet Not Connected</Text>
+              <Text style={styles.walletMessage}>
+                Please connect your wallet to continue with payment
               </Text>
-              <Text style={styles.userStats}>
-                Total Spent: ${user.totalSpent.toFixed(2)} | Rewards:{" "}
-                {user.totalRewards.toFixed(4)} SOL
-              </Text>
+              <Button
+                title="Connect Wallet"
+                onPress={() => navigation.navigate("UserProfile" as never)}
+                variant="primary"
+                style={styles.connectWalletButton}
+              />
             </Card>
+          ) : (
+            /* User Info (if available) */
+            user && (
+              <Card style={styles.userCard}>
+                <Text style={styles.userTitle}>Paying with</Text>
+                <Text style={styles.userAddress}>
+                  {authorization.selectedAccount.publicKey
+                    .toString()
+                    .slice(0, 8)}
+                  ...
+                  {authorization.selectedAccount.publicKey.toString().slice(-8)}
+                </Text>
+                <Text style={styles.userStats}>
+                  Total Spent: ${user.totalSpent.toFixed(2)} | Rewards:{" "}
+                  {user.totalRewards.toFixed(4)} SOL
+                </Text>
+              </Card>
+            )
           )}
 
           {/* Merchant Info */}
@@ -334,7 +379,12 @@ const PaymentScreen: React.FC<Props> = ({ navigation, route }) => {
             onPress={handlePayment}
             variant="primary"
             size="large"
-            disabled={!usdValue || usdValue <= 0 || isProcessing || !user}
+            disabled={
+              !usdValue ||
+              usdValue <= 0 ||
+              isProcessing ||
+              !authorization?.selectedAccount
+            }
             style={styles.payButton}
           />
           {isProcessing && (
@@ -373,7 +423,7 @@ const styles = StyleSheet.create({
   },
 
   bottomSpacer: {
-    height: 120, // Space for the fixed footer
+    height: 140, // Increased space for the fixed footer
   },
 
   header: {
@@ -381,31 +431,66 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     padding: Spacing.lg,
+    paddingTop: Spacing.xl,
+    backgroundColor: SolanaColors.background.primary,
+    borderBottomWidth: 1,
+    borderBottomColor: SolanaColors.border.secondary,
   },
 
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: SolanaColors.background.secondary,
     justifyContent: "center",
     alignItems: "center",
+    ...createShadow(2),
   },
 
   backButtonText: {
     color: SolanaColors.text.primary,
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "bold",
   },
 
   headerTitle: {
-    fontSize: Typography.fontSize.xl,
+    fontSize: Typography.fontSize["2xl"],
     fontWeight: Typography.fontWeight.bold,
     color: SolanaColors.text.primary,
   },
 
   placeholder: {
     width: 40,
+  },
+
+  walletCard: {
+    margin: Spacing.lg,
+    marginTop: Spacing.md,
+    alignItems: "center",
+    paddingVertical: Spacing["2xl"],
+    backgroundColor: SolanaColors.background.card,
+    borderWidth: 2,
+    borderColor: SolanaColors.button.primary,
+    borderStyle: "dashed",
+  },
+
+  walletTitle: {
+    fontSize: Typography.fontSize.xl,
+    fontWeight: Typography.fontWeight.bold,
+    color: SolanaColors.button.primary,
+    marginBottom: Spacing.md,
+  },
+
+  walletMessage: {
+    fontSize: Typography.fontSize.base,
+    color: SolanaColors.text.secondary,
+    textAlign: "center",
+    marginBottom: Spacing.xl,
+    lineHeight: Typography.lineHeight.relaxed * Typography.fontSize.base,
+  },
+
+  connectWalletButton: {
+    paddingHorizontal: Spacing.xl,
   },
 
   userCard: {
@@ -638,7 +723,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     padding: Spacing.lg,
-    paddingBottom: Platform.OS === "android" ? Spacing.xl : Spacing.lg,
+    paddingBottom: Platform.OS === "android" ? Spacing["2xl"] : Spacing.xl,
     backgroundColor: SolanaColors.background.primary,
     borderTopWidth: 1,
     borderTopColor: SolanaColors.border.light,

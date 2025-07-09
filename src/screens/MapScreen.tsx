@@ -7,8 +7,8 @@ import {
   TouchableOpacity,
   Modal,
   ScrollView,
-  Alert,
 } from "react-native";
+import { showMessage } from "react-native-flash-message";
 import MapView, { Marker, Region } from "react-native-maps";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
@@ -17,6 +17,9 @@ import { SolanaColors, Typography, Spacing, createShadow } from "../theme";
 import { mockMerchants, Merchant, getCategories } from "../data/merchants";
 import { useMerchants } from "../firebase";
 import { seedDataIfNeeded } from "../firebase/seedData";
+import { useAuthorization } from "../hooks/useAuthorization";
+import { locationService, LocationCoords } from "../services/locationService";
+import { MerchantListBottomSheet } from "../components/MerchantListBottomSheet";
 
 type MapScreenNavigationProp = StackNavigationProp<RootStackParamList, "Map">;
 
@@ -39,7 +42,13 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
   const [searchText, setSearchText] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [showMenu, setShowMenu] = useState(false);
+  const [showMerchantList, setShowMerchantList] = useState(false);
+  const [userLocation, setUserLocation] = useState<LocationCoords | null>(null);
+  const [locationLoading, setLocationLoading] = useState(false);
   const mapRef = useRef<MapView>(null);
+
+  // MWA hooks
+  const { authorization } = useAuthorization();
 
   // Firebase hooks
   const {
@@ -53,12 +62,63 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
     seedDataIfNeeded();
   }, []);
 
+  // Get user location on mount
+  React.useEffect(() => {
+    const getUserLocation = async () => {
+      try {
+        setLocationLoading(true);
+        const hasPermission = locationService.getHasPermission();
+
+        if (hasPermission) {
+          const location = await locationService.getCurrentLocation();
+          setUserLocation(location);
+
+          // Center map on user location
+          if (mapRef.current) {
+            mapRef.current.animateToRegion(
+              {
+                latitude: location.latitude,
+                longitude: location.longitude,
+                latitudeDelta: 0.05,
+                longitudeDelta: 0.05,
+              },
+              1000
+            );
+          }
+        }
+      } catch (error) {
+        console.log("Could not get user location:", error);
+      } finally {
+        setLocationLoading(false);
+      }
+    };
+
+    getUserLocation();
+  }, []);
+
   // Use Firebase merchants if available, otherwise fallback to mock data
   const merchants =
     firebaseMerchants.length > 0 ? firebaseMerchants : mockMerchants;
 
+  // Add distance calculation and sort by proximity
+  const merchantsWithDistance = React.useMemo(() => {
+    if (!userLocation) return merchants;
+
+    return merchants
+      .map((merchant) => ({
+        ...merchant,
+        distance: locationService.calculateDistance(
+          userLocation.latitude,
+          userLocation.longitude,
+          merchant.latitude,
+          merchant.longitude
+        ),
+      }))
+      .sort((a, b) => (a.distance || 0) - (b.distance || 0));
+  }, [merchants, userLocation]);
+
   // Filter merchants based on search and category
-  const filteredMerchants = merchants.filter((merchant) => {
+  const filteredMerchants = merchantsWithDistance.filter((merchant) => {
     const matchesSearch =
       merchant.name.toLowerCase().includes(searchText.toLowerCase()) ||
       merchant.address.toLowerCase().includes(searchText.toLowerCase());
@@ -96,14 +156,27 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
     return "★".repeat(Math.floor(rating)) + "☆".repeat(5 - Math.floor(rating));
   };
 
+  const formatDistance = (distance?: number) => {
+    if (!distance) return "";
+    if (distance < 1) {
+      return `${Math.round(distance * 1000)}m away`;
+    }
+    return `${distance.toFixed(1)}km away`;
+  };
+
   // Show error if Firebase fails to load merchants
   if (merchantsError) {
-    Alert.alert("Error", "Failed to load merchants. Using offline data.");
+    showMessage({
+      message: "Error",
+      description: "Failed to load merchants. Using offline data.",
+      type: "warning",
+      duration: 3000,
+    });
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header with search and menu */}
+      {/* Header with search, wallet button, and menu */}
       <View style={styles.header}>
         <View style={styles.searchContainer}>
           <TextInput
@@ -114,9 +187,22 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
             containerStyle={styles.searchInputContainer}
           />
         </View>
-        <TouchableOpacity style={styles.menuButton} onPress={handleMenuPress}>
-          <Text style={styles.menuIcon}>☰</Text>
-        </TouchableOpacity>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity
+            style={[
+              styles.walletButton,
+              authorization?.selectedAccount && styles.walletButtonConnected,
+            ]}
+            onPress={() => navigation.navigate("UserProfile")}
+          >
+            <Text style={styles.walletButtonText}>
+              {authorization?.selectedAccount ? "🔗" : "👤"}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.menuButton} onPress={handleMenuPress}>
+            <Text style={styles.menuIcon}>☰</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Category filter */}
@@ -152,6 +238,16 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
           initialRegion={BANGALORE_REGION}
           customMapStyle={mapStyle}
         >
+          {/* User location marker */}
+          {userLocation && (
+            <Marker coordinate={userLocation} anchor={{ x: 0.5, y: 0.5 }}>
+              <View style={styles.userLocationMarker}>
+                <View style={styles.userLocationDot} />
+              </View>
+            </Marker>
+          )}
+
+          {/* Merchant markers */}
           {filteredMerchants.map((merchant) => (
             <Marker
               key={merchant.id}
@@ -169,6 +265,15 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
             </Marker>
           ))}
         </MapView>
+
+        {/* Floating List Toggle Button */}
+        <TouchableOpacity
+          style={styles.listToggleButton}
+          onPress={() => setShowMerchantList(true)}
+        >
+          <Text style={styles.listToggleIcon}>📋</Text>
+          <Text style={styles.listToggleText}>List</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Merchant Details Modal */}
@@ -213,6 +318,11 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
                   <Text style={styles.merchantAddress}>
                     📍 {selectedMerchant.address}
                   </Text>
+                  {(selectedMerchant as any).distance && (
+                    <Text style={styles.merchantDistance}>
+                      🚶 {formatDistance((selectedMerchant as any).distance)}
+                    </Text>
+                  )}
                   {selectedMerchant.description && (
                     <Text style={styles.merchantDescription}>
                       {selectedMerchant.description}
@@ -271,6 +381,22 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
           </View>
         </View>
       </Modal>
+
+      {/* Merchant List Bottom Sheet */}
+      <MerchantListBottomSheet
+        merchants={filteredMerchants}
+        userLocation={userLocation}
+        isVisible={showMerchantList}
+        onClose={() => setShowMerchantList(false)}
+        onMerchantSelect={(merchant) => {
+          setShowMerchantList(false);
+          navigation.navigate("Payment", {
+            merchantId: merchant.id,
+            merchantName: merchant.name,
+          });
+        }}
+        calculateDistance={locationService.calculateDistance}
+      />
     </SafeAreaView>
   );
 };
@@ -431,6 +557,30 @@ const styles = StyleSheet.create({
     height: 40,
   },
 
+  headerButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+
+  walletButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: SolanaColors.button.secondary,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  walletButtonConnected: {
+    backgroundColor: SolanaColors.button.primary,
+  },
+
+  walletButtonText: {
+    color: SolanaColors.white,
+    fontSize: 18,
+  },
+
   menuButton: {
     width: 40,
     height: 40,
@@ -504,6 +654,23 @@ const styles = StyleSheet.create({
     color: SolanaColors.white,
     fontSize: 16,
     fontWeight: "bold",
+  },
+
+  userLocationMarker: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: SolanaColors.white,
+    justifyContent: "center",
+    alignItems: "center",
+    ...createShadow(3),
+  },
+
+  userLocationDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: SolanaColors.button.primary,
   },
 
   // Modal styles
@@ -583,6 +750,13 @@ const styles = StyleSheet.create({
   merchantAddress: {
     fontSize: Typography.fontSize.base,
     color: SolanaColors.text.onCard,
+    marginBottom: Spacing.xs,
+  },
+
+  merchantDistance: {
+    fontSize: Typography.fontSize.sm,
+    color: SolanaColors.button.primary,
+    fontWeight: Typography.fontWeight.medium,
     marginBottom: Spacing.md,
   },
 
@@ -663,6 +837,31 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.base,
     color: SolanaColors.text.onCard,
     textAlign: "center",
+  },
+
+  // List toggle button styles
+  listToggleButton: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    backgroundColor: SolanaColors.button.primary,
+    borderRadius: 25,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    flexDirection: "row",
+    alignItems: "center",
+    ...createShadow(4),
+  },
+
+  listToggleIcon: {
+    fontSize: 18,
+    marginRight: Spacing.xs,
+  },
+
+  listToggleText: {
+    color: SolanaColors.white,
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.medium,
   },
 });
 

@@ -1,11 +1,6 @@
 import React, { useState, useCallback } from "react";
-import {
-  TouchableOpacity,
-  Text,
-  StyleSheet,
-  Alert,
-  Linking,
-} from "react-native";
+import { TouchableOpacity, Text, StyleSheet, Linking } from "react-native";
+import { showMessage } from "react-native-flash-message";
 import {
   Transaction,
   TransactionInstruction,
@@ -33,17 +28,13 @@ export function SendMemoButton() {
   const showExplorerAlert = useCallback((signature: string) => {
     const explorerUrl = `https://explorer.solana.com/tx/${signature}?cluster=${APP_CLUSTER}`;
 
-    Alert.alert(
-      "Success!",
-      "Your message was successfully recorded on the blockchain.",
-      [
-        {
-          text: "View on Explorer",
-          onPress: () => Linking.openURL(explorerUrl),
-        },
-        { text: "OK", style: "cancel" },
-      ]
-    );
+    showMessage({
+      message: "Success!",
+      description: "Your message was successfully recorded on the blockchain.",
+      type: "success",
+      duration: 5000,
+      onPress: () => Linking.openURL(explorerUrl),
+    });
   }, []);
 
   const sendMemo = useCallback(async () => {
@@ -111,10 +102,12 @@ export function SendMemoButton() {
       showExplorerAlert(txSignature);
     } catch (error) {
       console.error("Failed to send memo:", error);
-      Alert.alert(
-        "Error",
-        "Failed to send memo transaction. Please try again."
-      );
+      showMessage({
+        message: "Error",
+        description: "Failed to send memo transaction. Please try again.",
+        type: "danger",
+        duration: 4000,
+      });
     } finally {
       setIsLoading(false);
     }
