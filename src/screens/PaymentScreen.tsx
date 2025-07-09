@@ -8,6 +8,8 @@ import {
   Alert,
   ActivityIndicator,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RouteProp } from "@react-navigation/native";
@@ -15,6 +17,7 @@ import { RootStackParamList } from "../navigation/AppNavigator";
 import { Button, Card, TextInput } from "../components/ui";
 import { SolanaColors, Typography, Spacing, createShadow } from "../theme";
 import { mockMerchants, findMerchantById } from "../data/merchants";
+import { usePaymentProcessor, useUser } from "../firebase";
 
 type PaymentScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -37,13 +40,29 @@ const PaymentScreen: React.FC<Props> = ({ navigation, route }) => {
   const { merchantId, merchantName } = route.params;
   const [usdAmount, setUsdAmount] = useState("");
   const [selectedToken, setSelectedToken] = useState<"SOL" | "USDC">("SOL");
-  const [isProcessing, setIsProcessing] = useState(false);
   const [merchant, setMerchant] = useState(findMerchantById(merchantId));
+
+  // Firebase hooks
+  const {
+    processPayment,
+    processing: firebaseProcessing,
+    error: paymentError,
+  } = usePaymentProcessor();
+  const { user, loading: userLoading } = useUser("mock-wallet-address"); // In real app, get from wallet adapter
+
+  // Combined loading state
+  const isProcessing = firebaseProcessing || userLoading;
 
   // Calculate token amounts
   const usdValue = parseFloat(usdAmount) || 0;
   const solAmount = usdValue / EXCHANGE_RATES.SOL_TO_USD;
   const usdcAmount = usdValue / EXCHANGE_RATES.USDC_TO_USD;
+
+  useEffect(() => {
+    if (paymentError) {
+      Alert.alert("Payment Error", paymentError);
+    }
+  }, [paymentError]);
 
   const handleAmountChange = (value: string) => {
     // Only allow numbers and one decimal point
@@ -72,38 +91,50 @@ const PaymentScreen: React.FC<Props> = ({ navigation, route }) => {
       return;
     }
 
-    setIsProcessing(true);
+    if (!user) {
+      Alert.alert(
+        "Error",
+        "User not found. Please ensure your wallet is connected."
+      );
+      return;
+    }
 
     try {
-      // Simulate payment processing
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Generate mock transaction ID
+      const mockTransactionId = `tx_${Date.now()}_${Math.random()
+        .toString(36)
+        .substr(2, 9)}`;
 
-      // In a real app, this would:
-      // 1. Connect to Mobile Wallet Adapter
-      // 2. Create transaction with merchant's wallet address
-      // 3. Sign and send transaction
-      // 4. Wait for confirmation
+      // Process payment through Firebase
+      const result = await processPayment({
+        merchantId,
+        merchantName,
+        userId: user.id,
+        usdAmount: usdValue,
+        tokenAmount: selectedToken === "SOL" ? solAmount : usdcAmount,
+        token: selectedToken,
+        transactionId: mockTransactionId,
+      });
 
+      // Navigate to success screen with Firebase transaction data
       const paymentData = {
         merchantId,
         merchantName,
         usdAmount: usdValue,
         tokenAmount: selectedToken === "SOL" ? solAmount : usdcAmount,
         token: selectedToken,
-        transactionId: `tx_${Date.now()}_${Math.random()
-          .toString(36)
-          .substr(2, 9)}`,
+        transactionId: result.transactionId,
         timestamp: new Date().toISOString(),
+        rewardAmount: result.rewardAmount,
       };
 
       navigation.replace("PaymentSuccess", paymentData);
     } catch (error) {
+      console.error("Payment failed:", error);
       Alert.alert(
         "Payment Failed",
         "There was an error processing your payment. Please try again."
       );
-    } finally {
-      setIsProcessing(false);
     }
   };
 
@@ -161,131 +192,164 @@ const PaymentScreen: React.FC<Props> = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-            disabled={isProcessing}
-          >
-            <Text style={styles.backButtonText}>←</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Payment</Text>
-          <View style={styles.placeholder} />
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+              disabled={isProcessing}
+            >
+              <Text style={styles.backButtonText}>←</Text>
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Payment</Text>
+            <View style={styles.placeholder} />
+          </View>
+
+          {/* User Info (if available) */}
+          {user && (
+            <Card style={styles.userCard}>
+              <Text style={styles.userTitle}>Paying with</Text>
+              <Text style={styles.userAddress}>
+                {user.walletAddress.slice(0, 8)}...
+                {user.walletAddress.slice(-8)}
+              </Text>
+              <Text style={styles.userStats}>
+                Total Spent: ${user.totalSpent.toFixed(2)} | Rewards:{" "}
+                {user.totalRewards.toFixed(4)} SOL
+              </Text>
+            </Card>
+          )}
+
+          {/* Merchant Info */}
+          <Card style={styles.merchantCard}>
+            <Text style={styles.merchantName}>{merchant.name}</Text>
+            <Text style={styles.merchantAddress}>📍 {merchant.address}</Text>
+            <Text style={styles.merchantCategory}>{merchant.category}</Text>
+          </Card>
+
+          {/* Amount Input */}
+          <Card style={styles.amountCard}>
+            <Text style={styles.sectionTitle}>Payment Amount</Text>
+            <View style={styles.amountInputContainer}>
+              <Text style={styles.currencySymbol}>$</Text>
+              <TextInput
+                placeholder="0.00"
+                value={usdAmount}
+                onChangeText={handleAmountChange}
+                keyboardType="decimal-pad"
+                style={styles.amountInput}
+                containerStyle={styles.amountInputWrapper}
+                editable={!isProcessing}
+              />
+              <Text style={styles.currencyLabel}>USD</Text>
+            </View>
+          </Card>
+
+          {/* Token Selection */}
+          {usdValue > 0 && (
+            <Card style={styles.tokenCard}>
+              <Text style={styles.sectionTitle}>Pay with</Text>
+              <View style={styles.tokenOptions}>
+                {renderTokenOption("SOL", solAmount, "◎")}
+                {renderTokenOption("USDC", usdcAmount, "$")}
+              </View>
+              <View style={styles.exchangeRate}>
+                <Text style={styles.exchangeRateText}>
+                  1 {selectedToken} = $
+                  {selectedToken === "SOL"
+                    ? EXCHANGE_RATES.SOL_TO_USD.toFixed(2)
+                    : EXCHANGE_RATES.USDC_TO_USD.toFixed(2)}{" "}
+                  USD
+                </Text>
+              </View>
+            </Card>
+          )}
+
+          {/* Payment Summary */}
+          {usdValue > 0 && (
+            <Card style={styles.summaryCard}>
+              <Text style={styles.sectionTitle}>Payment Summary</Text>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Amount</Text>
+                <Text style={styles.summaryValue}>
+                  ${usdValue.toFixed(2)} USD
+                </Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Paying with</Text>
+                <Text style={styles.summaryValue}>
+                  {(selectedToken === "SOL" ? solAmount : usdcAmount).toFixed(
+                    selectedToken === "SOL" ? 4 : 2
+                  )}{" "}
+                  {selectedToken}
+                </Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>To</Text>
+                <Text style={styles.summaryValue}>{merchant.name}</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Cashback (1%)</Text>
+                <Text style={styles.summaryValue}>
+                  {((usdValue * 0.01) / EXCHANGE_RATES.SOL_TO_USD).toFixed(4)}{" "}
+                  SOL
+                </Text>
+              </View>
+              <View style={[styles.summaryRow, styles.summaryRowBorder]}>
+                <Text style={styles.summaryLabel}>Network Fee</Text>
+                <Text style={styles.summaryValue}>~$0.01</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={[styles.summaryLabel, styles.totalLabel]}>
+                  Total
+                </Text>
+                <Text style={[styles.summaryValue, styles.totalValue]}>
+                  ${(usdValue + 0.01).toFixed(2)} USD
+                </Text>
+              </View>
+            </Card>
+          )}
+
+          {/* Add bottom spacing to ensure content is not hidden */}
+          <View style={styles.bottomSpacer} />
+        </ScrollView>
+
+        {/* Payment Button - Fixed at bottom */}
+        <View style={styles.footer}>
+          <Button
+            title={
+              isProcessing
+                ? "Processing..."
+                : `Pay ${usdValue > 0 ? `$${usdValue.toFixed(2)}` : ""}`
+            }
+            onPress={handlePayment}
+            variant="primary"
+            size="large"
+            disabled={!usdValue || usdValue <= 0 || isProcessing || !user}
+            style={styles.payButton}
+          />
+          {isProcessing && (
+            <View style={styles.processingContainer}>
+              <ActivityIndicator
+                color={SolanaColors.button.primary}
+                size="small"
+              />
+              <Text style={styles.processingText}>
+                {userLoading ? "Loading user data..." : "Processing payment..."}
+              </Text>
+            </View>
+          )}
         </View>
-
-        {/* Merchant Info */}
-        <Card style={styles.merchantCard}>
-          <Text style={styles.merchantName}>{merchant.name}</Text>
-          <Text style={styles.merchantAddress}>📍 {merchant.address}</Text>
-          <Text style={styles.merchantCategory}>{merchant.category}</Text>
-        </Card>
-
-        {/* Amount Input */}
-        <Card style={styles.amountCard}>
-          <Text style={styles.sectionTitle}>Payment Amount</Text>
-          <View style={styles.amountInputContainer}>
-            <Text style={styles.currencySymbol}>$</Text>
-            <TextInput
-              placeholder="0.00"
-              value={usdAmount}
-              onChangeText={handleAmountChange}
-              keyboardType="decimal-pad"
-              style={styles.amountInput}
-              containerStyle={styles.amountInputWrapper}
-              editable={!isProcessing}
-            />
-            <Text style={styles.currencyLabel}>USD</Text>
-          </View>
-        </Card>
-
-        {/* Token Selection */}
-        {usdValue > 0 && (
-          <Card style={styles.tokenCard}>
-            <Text style={styles.sectionTitle}>Pay with</Text>
-            <View style={styles.tokenOptions}>
-              {renderTokenOption("SOL", solAmount, "◎")}
-              {renderTokenOption("USDC", usdcAmount, "$")}
-            </View>
-            <View style={styles.exchangeRate}>
-              <Text style={styles.exchangeRateText}>
-                1 {selectedToken} = $
-                {selectedToken === "SOL"
-                  ? EXCHANGE_RATES.SOL_TO_USD.toFixed(2)
-                  : EXCHANGE_RATES.USDC_TO_USD.toFixed(2)}{" "}
-                USD
-              </Text>
-            </View>
-          </Card>
-        )}
-
-        {/* Payment Summary */}
-        {usdValue > 0 && (
-          <Card style={styles.summaryCard}>
-            <Text style={styles.sectionTitle}>Payment Summary</Text>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Amount</Text>
-              <Text style={styles.summaryValue}>
-                ${usdValue.toFixed(2)} USD
-              </Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Paying with</Text>
-              <Text style={styles.summaryValue}>
-                {(selectedToken === "SOL" ? solAmount : usdcAmount).toFixed(
-                  selectedToken === "SOL" ? 4 : 2
-                )}{" "}
-                {selectedToken}
-              </Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>To</Text>
-              <Text style={styles.summaryValue}>{merchant.name}</Text>
-            </View>
-            <View style={[styles.summaryRow, styles.summaryRowBorder]}>
-              <Text style={styles.summaryLabel}>Network Fee</Text>
-              <Text style={styles.summaryValue}>~$0.01</Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, styles.totalLabel]}>
-                Total
-              </Text>
-              <Text style={[styles.summaryValue, styles.totalValue]}>
-                ${(usdValue + 0.01).toFixed(2)} USD
-              </Text>
-            </View>
-          </Card>
-        )}
-      </ScrollView>
-
-      {/* Payment Button */}
-      <View style={styles.footer}>
-        <Button
-          title={
-            isProcessing
-              ? "Processing..."
-              : `Pay ${usdValue > 0 ? `$${usdValue.toFixed(2)}` : ""}`
-          }
-          onPress={handlePayment}
-          variant="primary"
-          size="large"
-          disabled={!usdValue || usdValue <= 0 || isProcessing}
-          style={styles.payButton}
-        />
-        {isProcessing && (
-          <View style={styles.processingContainer}>
-            <ActivityIndicator
-              color={SolanaColors.button.primary}
-              size="small"
-            />
-            <Text style={styles.processingText}>Connecting to wallet...</Text>
-          </View>
-        )}
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -296,8 +360,20 @@ const styles = StyleSheet.create({
     backgroundColor: SolanaColors.background.primary,
   },
 
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+
   scrollView: {
     flex: 1,
+  },
+
+  scrollContent: {
+    flexGrow: 1,
+  },
+
+  bottomSpacer: {
+    height: 120, // Space for the fixed footer
   },
 
   header: {
@@ -330,6 +406,29 @@ const styles = StyleSheet.create({
 
   placeholder: {
     width: 40,
+  },
+
+  userCard: {
+    margin: Spacing.lg,
+    marginTop: 0,
+  },
+
+  userTitle: {
+    fontSize: Typography.fontSize.sm,
+    color: SolanaColors.text.secondary,
+    marginBottom: Spacing.xs,
+  },
+
+  userAddress: {
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.semibold,
+    color: SolanaColors.button.primary,
+    marginBottom: Spacing.xs,
+  },
+
+  userStats: {
+    fontSize: Typography.fontSize.sm,
+    color: SolanaColors.text.secondary,
   },
 
   merchantCard: {
@@ -534,10 +633,16 @@ const styles = StyleSheet.create({
   },
 
   footer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
     padding: Spacing.lg,
+    paddingBottom: Platform.OS === "android" ? Spacing.xl : Spacing.lg,
     backgroundColor: SolanaColors.background.primary,
     borderTopWidth: 1,
     borderTopColor: SolanaColors.border.light,
+    ...createShadow(4),
   },
 
   payButton: {

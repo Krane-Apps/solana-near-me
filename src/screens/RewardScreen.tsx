@@ -12,6 +12,7 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { Button, Card } from "../components/ui";
 import { SolanaColors, Typography, Spacing, createShadow } from "../theme";
+import { useUser, useUserRewards, useAchievements } from "../firebase";
 
 type RewardScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -126,6 +127,22 @@ const RewardScreen: React.FC<Props> = ({ navigation }) => {
     "overview" | "achievements" | "nfts"
   >("overview");
 
+  // Firebase hooks
+  const { user, loading: userLoading } = useUser("mock-wallet-address"); // In real app, get from wallet adapter
+  const { rewards, loading: rewardsLoading } = useUserRewards(
+    "mock-wallet-address"
+  );
+  const { achievements, loading: achievementsLoading } = useAchievements();
+
+  // Calculate total SOL earned from rewards
+  const totalSolEarned = rewards.reduce((total, reward) => {
+    return reward.token === "SOL" ? total + reward.amount : total;
+  }, 0);
+
+  // Use Firebase data if available, otherwise fallback to mock data
+  const userData = user || mockUserData;
+  const isLoading = userLoading || rewardsLoading || achievementsLoading;
+
   const handleBackToMap = () => {
     navigation.navigate("Map");
   };
@@ -173,23 +190,31 @@ const RewardScreen: React.FC<Props> = ({ navigation }) => {
           <Text style={styles.solIcon}>◎</Text>
         </View>
         <Text style={styles.balanceAmount}>
-          {mockUserData.totalSolEarned.toFixed(4)} SOL
+          {(user ? totalSolEarned : mockUserData.totalSolEarned).toFixed(4)} SOL
         </Text>
         <Text style={styles.balanceUsd}>
-          ≈ ${(mockUserData.totalSolEarned * 98.5).toFixed(2)} USD
+          ≈ $
+          {(
+            (user ? totalSolEarned : mockUserData.totalSolEarned) * 98.5
+          ).toFixed(2)}{" "}
+          USD
         </Text>
       </Card>
 
       {/* Stats Grid */}
       <View style={styles.statsGrid}>
         <Card style={styles.statCard}>
-          <Text style={styles.statValue}>{mockUserData.currentStreak}</Text>
+          <Text style={styles.statValue}>
+            {user ? 7 : mockUserData.currentStreak}
+          </Text>
           <Text style={styles.statLabel}>Day Streak</Text>
           <Text style={styles.statIcon}>🔥</Text>
         </Card>
 
         <Card style={styles.statCard}>
-          <Text style={styles.statValue}>{mockUserData.totalTransactions}</Text>
+          <Text style={styles.statValue}>
+            {user ? user.paymentCount : mockUserData.totalTransactions}
+          </Text>
           <Text style={styles.statLabel}>Payments</Text>
           <Text style={styles.statIcon}>💳</Text>
         </Card>
@@ -314,6 +339,17 @@ const RewardScreen: React.FC<Props> = ({ navigation }) => {
       )}
     </View>
   );
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading rewards...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -665,6 +701,17 @@ const styles = StyleSheet.create({
     color: SolanaColors.text.secondary,
     textAlign: "center",
     lineHeight: Typography.lineHeight.relaxed * Typography.fontSize.base,
+  },
+
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  loadingText: {
+    fontSize: Typography.fontSize.lg,
+    color: SolanaColors.text.primary,
   },
 });
 

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "610121773445",
+    "project_id": "solana-near-me",
+    "storage_bucket": "solana-near-me.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:610121773445:android:2f0230ac4d6f1ad3f614ec",
+        "android_client_info": {
+          "package_name": "com.bluntbrain.NearMe"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZU3bCdZDb3pJAXvOiF-K54_X9ndjGwsY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

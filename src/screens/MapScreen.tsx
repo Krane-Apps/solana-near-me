@@ -15,6 +15,8 @@ import { RootStackParamList } from "../navigation/AppNavigator";
 import { Button, Card, TextInput } from "../components/ui";
 import { SolanaColors, Typography, Spacing, createShadow } from "../theme";
 import { mockMerchants, Merchant, getCategories } from "../data/merchants";
+import { useMerchants } from "../firebase";
+import { seedDataIfNeeded } from "../firebase/seedData";
 
 type MapScreenNavigationProp = StackNavigationProp<RootStackParamList, "Map">;
 
@@ -39,8 +41,24 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
   const [showMenu, setShowMenu] = useState(false);
   const mapRef = useRef<MapView>(null);
 
+  // Firebase hooks
+  const {
+    merchants: firebaseMerchants,
+    loading: merchantsLoading,
+    error: merchantsError,
+  } = useMerchants();
+
+  // Seed data if needed (only runs once)
+  React.useEffect(() => {
+    seedDataIfNeeded();
+  }, []);
+
+  // Use Firebase merchants if available, otherwise fallback to mock data
+  const merchants =
+    firebaseMerchants.length > 0 ? firebaseMerchants : mockMerchants;
+
   // Filter merchants based on search and category
-  const filteredMerchants = mockMerchants.filter((merchant) => {
+  const filteredMerchants = merchants.filter((merchant) => {
     const matchesSearch =
       merchant.name.toLowerCase().includes(searchText.toLowerCase()) ||
       merchant.address.toLowerCase().includes(searchText.toLowerCase());
@@ -77,6 +95,11 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
   const renderStars = (rating: number) => {
     return "★".repeat(Math.floor(rating)) + "☆".repeat(5 - Math.floor(rating));
   };
+
+  // Show error if Firebase fails to load merchants
+  if (merchantsError) {
+    Alert.alert("Error", "Failed to load merchants. Using offline data.");
+  }
 
   return (
     <SafeAreaView style={styles.container}>

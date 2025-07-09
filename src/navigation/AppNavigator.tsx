@@ -26,6 +26,7 @@ export type RootStackParamList = {
     token: "SOL" | "USDC";
     transactionId: string;
     timestamp: string;
+    rewardAmount?: number;
   };
   Reward: undefined;
   MerchantRegistration: undefined;

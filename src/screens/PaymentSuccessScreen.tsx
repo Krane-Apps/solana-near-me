@@ -36,6 +36,7 @@ const PaymentSuccessScreen: React.FC<Props> = ({ navigation, route }) => {
     token,
     transactionId,
     timestamp,
+    rewardAmount: firebaseRewardAmount,
   } = route.params;
 
   const handleViewReward = () => {
@@ -55,8 +56,10 @@ const PaymentSuccessScreen: React.FC<Props> = ({ navigation, route }) => {
     return txId.length > 16 ? `${txId.slice(0, 8)}...${txId.slice(-8)}` : txId;
   };
 
-  // Calculate rewards (1% of USD amount as SOL rewards)
-  const rewardAmount = (usdAmount * 0.01).toFixed(4);
+  // Use Firebase reward amount or calculate fallback (1% of USD amount as SOL rewards)
+  const rewardAmount = firebaseRewardAmount
+    ? firebaseRewardAmount.toFixed(4)
+    : (usdAmount * 0.01).toFixed(4);
 
   return (
     <SafeAreaView style={styles.container}>

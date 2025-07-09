@@ -16,7 +16,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.bluntbrain.NearMe",
       "config": {
-        "googleMapsApiKey": "${GOOGLE_MAPS_API_KEY}"
+        "googleMapsApiKey": "AIzaSyAlbJEjGnDwzIwRJJomimekdLD3z7WxrRs"
       }
     },
     "android": {
@@ -28,7 +28,7 @@
       "package": "com.bluntbrain.NearMe",
       "config": {
         "googleMaps": {
-          "apiKey": "${GOOGLE_MAPS_API_KEY}"
+          "apiKey": "AIzaSyAlbJEjGnDwzIwRJJomimekdLD3z7WxrRs"
         }
       }
     },
