@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   TextInput as RNTextInput,
   View,
@@ -17,6 +17,7 @@ export interface TextInputProps extends RNTextInputProps {
   inputStyle?: TextStyle;
   labelStyle?: TextStyle;
   errorStyle?: TextStyle;
+  variant?: "default" | "outlined" | "filled";
 }
 
 export const TextInput: React.FC<TextInputProps> = ({
@@ -26,24 +27,39 @@ export const TextInput: React.FC<TextInputProps> = ({
   inputStyle,
   labelStyle,
   errorStyle,
+  variant = "default",
   ...textInputProps
 }) => {
+  const [isFocused, setIsFocused] = useState(false);
+
+  const inputContainerStyle = [
+    styles.inputContainer,
+    styles[variant],
+    isFocused && styles.focused,
+    error && styles.error,
+    inputStyle,
+  ];
+
   return (
     <View style={[styles.container, containerStyle]}>
       {label && <Text style={[styles.label, labelStyle]}>{label}</Text>}
-      <RNTextInput
-        style={[styles.input, error && styles.inputError, inputStyle]}
-        placeholderTextColor={SolanaColors.text.secondary}
-        {...textInputProps}
-      />
-      {error && <Text style={[styles.error, errorStyle]}>{error}</Text>}
+      <View style={inputContainerStyle}>
+        <RNTextInput
+          style={styles.input}
+          placeholderTextColor={SolanaColors.text.tertiary}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          {...textInputProps}
+        />
+      </View>
+      {error && <Text style={[styles.errorText, errorStyle]}>{error}</Text>}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.lg,
   },
 
   label: {
@@ -53,25 +69,64 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
 
-  input: {
-    backgroundColor: SolanaColors.background.secondary,
-    borderColor: SolanaColors.border.primary,
+  inputContainer: {
+    borderRadius: Spacing.borderRadius.md,
     borderWidth: 1,
-    borderRadius: Spacing.component.input.borderRadius,
-    paddingHorizontal: Spacing.component.input.paddingHorizontal,
-    paddingVertical: Spacing.component.input.paddingVertical,
-    height: Spacing.layout.inputHeight,
-    color: SolanaColors.text.primary,
-    fontSize: Typography.fontSize.base,
+    borderColor: SolanaColors.border.primary,
+    backgroundColor: SolanaColors.white,
+    shadowColor: SolanaColors.shadow.light,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
 
-  inputError: {
-    borderColor: SolanaColors.status.error,
+  // Input variants
+  default: {
+    // Default styling applied above
+  },
+
+  outlined: {
+    backgroundColor: SolanaColors.white,
+    borderWidth: 1,
+    borderColor: SolanaColors.border.primary,
+  },
+
+  filled: {
+    backgroundColor: SolanaColors.background.secondary,
+    borderWidth: 0,
+  },
+
+  input: {
+    paddingHorizontal: Spacing.component.input.paddingHorizontal,
+    paddingVertical: Spacing.component.input.paddingVertical,
+    height: Spacing.component.input.height,
+    color: SolanaColors.text.primary,
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.regular,
+  },
+
+  focused: {
+    borderColor: SolanaColors.primary,
+    borderWidth: 2,
+    shadowColor: SolanaColors.primary,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
 
   error: {
+    borderColor: SolanaColors.status.error,
+    borderWidth: 2,
+  },
+
+  errorText: {
     color: SolanaColors.status.error,
     fontSize: Typography.fontSize.xs,
+    fontWeight: Typography.fontWeight.regular,
     marginTop: Spacing.xs,
   },
 });

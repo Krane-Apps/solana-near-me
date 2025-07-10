@@ -1,9 +1,16 @@
 import React from "react";
-import { View, Text, StyleSheet, Image, SafeAreaView } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  Image,
+  ScrollView,
+} from "react-native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
+import { SolanaColors, Typography, Spacing } from "../theme";
 import { Button } from "../components/ui";
-import { SolanaColors, Typography, Spacing, CommonStyles } from "../theme";
 
 type WelcomeScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -16,53 +23,72 @@ interface Props {
 
 const WelcomeScreen: React.FC<Props> = ({ navigation }) => {
   const handleStartPress = () => {
-    navigation.navigate("Map");
+    navigation.navigate("Main");
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        {/* Logo Section */}
-        <View style={styles.logoSection}>
-          {/* Using a placeholder for Solana logo - in real app would use actual logo */}
-          <View style={styles.logoPlaceholder}>
-            <Text style={styles.logoText}>⚡</Text>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Hero Section */}
+        <View style={styles.heroSection}>
+          <View style={styles.logoContainer}>
+            <Text style={styles.logoEmoji}>⚡</Text>
           </View>
-          <Text style={styles.title}>NearMe</Text>
+
+          <Text style={styles.title}>Welcome to NearMe</Text>
           <Text style={styles.subtitle}>
-            Find merchants near you and pay with Solana
+            Discover merchants near you and pay with Solana
           </Text>
         </View>
 
         {/* Features Section */}
         <View style={styles.featuresSection}>
           <View style={styles.feature}>
-            <Text style={styles.featureIcon}>🗺️</Text>
-            <Text style={styles.featureText}>Discover nearby merchants</Text>
+            <View style={styles.featureIcon}>
+              <Text style={styles.featureEmoji}>🗺️</Text>
+            </View>
+            <Text style={styles.featureTitle}>Find Nearby Merchants</Text>
+            <Text style={styles.featureDescription}>
+              Discover crypto-friendly businesses in your area
+            </Text>
           </View>
+
           <View style={styles.feature}>
-            <Text style={styles.featureIcon}>💰</Text>
-            <Text style={styles.featureText}>Pay with SOL or USDC</Text>
+            <View style={styles.featureIcon}>
+              <Text style={styles.featureEmoji}>💳</Text>
+            </View>
+            <Text style={styles.featureTitle}>Pay with Solana</Text>
+            <Text style={styles.featureDescription}>
+              Fast, secure payments with SOL and USDC
+            </Text>
           </View>
+
           <View style={styles.feature}>
-            <Text style={styles.featureIcon}>🎁</Text>
-            <Text style={styles.featureText}>
-              Earn rewards with every payment
+            <View style={styles.featureIcon}>
+              <Text style={styles.featureEmoji}>🎁</Text>
+            </View>
+            <Text style={styles.featureTitle}>Earn Rewards</Text>
+            <Text style={styles.featureDescription}>
+              Get SOL rewards for every transaction
             </Text>
           </View>
         </View>
 
-        {/* Start Button */}
-        <View style={styles.buttonSection}>
+        {/* CTA Section */}
+        <View style={styles.ctaSection}>
           <Button
             title="Get Started"
             onPress={handleStartPress}
-            variant="primary"
             size="large"
-            style={styles.startButton}
+            fullWidth
           />
+
+          <Text style={styles.footerText}>Powered by Solana blockchain</Text>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -73,82 +99,112 @@ const styles = StyleSheet.create({
     backgroundColor: SolanaColors.background.primary,
   },
 
-  content: {
-    flex: 1,
+  scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: Spacing.layout.screenPadding,
-    justifyContent: "space-between",
+  },
+
+  // Hero Section
+  heroSection: {
+    alignItems: "center",
     paddingTop: Spacing["6xl"],
     paddingBottom: Spacing["4xl"],
   },
 
-  logoSection: {
-    alignItems: "center",
-    flex: 1,
-    justifyContent: "center",
-  },
-
-  logoPlaceholder: {
+  logoContainer: {
     width: 100,
     height: 100,
     borderRadius: 50,
     backgroundColor: SolanaColors.primary,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: Spacing["3xl"],
+    marginBottom: Spacing["2xl"],
+    shadowColor: SolanaColors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
   },
 
-  logoText: {
+  logoEmoji: {
     fontSize: 48,
     color: SolanaColors.white,
   },
 
   title: {
-    fontSize: Typography.fontSize["5xl"],
+    fontSize: Typography.fontSize["3xl"],
     fontWeight: Typography.fontWeight.bold,
     color: SolanaColors.text.primary,
-    marginBottom: Spacing.md,
     textAlign: "center",
+    marginBottom: Spacing.md,
   },
 
   subtitle: {
     fontSize: Typography.fontSize.lg,
+    fontWeight: Typography.fontWeight.regular,
     color: SolanaColors.text.secondary,
     textAlign: "center",
     lineHeight: Typography.lineHeight.relaxed * Typography.fontSize.lg,
-    paddingHorizontal: Spacing.xl,
+    maxWidth: 280,
   },
 
+  // Features Section
   featuresSection: {
-    flex: 1,
-    justifyContent: "center",
-    paddingVertical: Spacing["4xl"],
+    paddingVertical: Spacing["2xl"],
   },
 
   feature: {
-    flexDirection: "row",
     alignItems: "center",
-    marginBottom: Spacing["2xl"],
-    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing["3xl"],
   },
 
   featureIcon: {
-    fontSize: 24,
-    marginRight: Spacing.lg,
-    width: 32,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: SolanaColors.background.secondary,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: Spacing.lg,
   },
 
-  featureText: {
-    fontSize: Typography.fontSize.base,
+  featureEmoji: {
+    fontSize: 28,
+  },
+
+  featureTitle: {
+    fontSize: Typography.fontSize.xl,
+    fontWeight: Typography.fontWeight.semibold,
     color: SolanaColors.text.primary,
+    textAlign: "center",
+    marginBottom: Spacing.sm,
+  },
+
+  featureDescription: {
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.regular,
+    color: SolanaColors.text.secondary,
+    textAlign: "center",
+    lineHeight: Typography.lineHeight.relaxed * Typography.fontSize.base,
+    maxWidth: 240,
+  },
+
+  // CTA Section
+  ctaSection: {
     flex: 1,
+    justifyContent: "flex-end",
+    paddingBottom: Spacing["2xl"],
   },
 
-  buttonSection: {
-    paddingBottom: Spacing.lg,
-  },
-
-  startButton: {
-    width: "100%",
+  footerText: {
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.regular,
+    color: SolanaColors.text.tertiary,
+    textAlign: "center",
+    marginTop: Spacing.lg,
   },
 });
 

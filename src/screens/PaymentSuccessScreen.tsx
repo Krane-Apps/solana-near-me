@@ -44,7 +44,7 @@ const PaymentSuccessScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const handleBackToMap = () => {
-    navigation.navigate("Map");
+    navigation.navigate("Main");
   };
 
   const formatDate = (isoString: string) => {
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
   rewardCard: {
     margin: Spacing.lg,
     marginTop: 0,
-    backgroundColor: SolanaColors.reward.card,
+    backgroundColor: SolanaColors.background.card,
   },
 
   rewardHeader: {

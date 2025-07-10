@@ -144,7 +144,7 @@ const RewardScreen: React.FC<Props> = ({ navigation }) => {
   const isLoading = userLoading || rewardsLoading || achievementsLoading;
 
   const handleBackToMap = () => {
-    navigation.navigate("Map");
+    navigation.navigate("Main");
   };
 
   const getRarityColor = (rarity: string) => {

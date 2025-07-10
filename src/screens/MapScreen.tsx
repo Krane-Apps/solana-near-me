@@ -3,23 +3,28 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   Modal,
   ScrollView,
 } from "react-native";
+import {
+  SafeAreaProvider,
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { showMessage } from "react-native-flash-message";
 import MapView, { Marker, Region } from "react-native-maps";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
-import { Button, Card, TextInput } from "../components/ui";
-import { SolanaColors, Typography, Spacing, createShadow } from "../theme";
-import { mockMerchants, Merchant, getCategories } from "../data/merchants";
+import { Button, Card } from "../components/ui";
+import { SolanaColors, Typography, Spacing } from "../theme";
+import { mockMerchants, Merchant } from "../data/merchants";
 import { useMerchants } from "../firebase";
 import { seedDataIfNeeded } from "../firebase/seedData";
 import { useAuthorization } from "../hooks/useAuthorization";
 import { locationService, LocationCoords } from "../services/locationService";
-import { MerchantListBottomSheet } from "../components/MerchantListBottomSheet";
+import { UI_CONSTANTS } from "../config/constants";
+import Icon from "react-native-vector-icons/MaterialIcons";
 
 type MapScreenNavigationProp = StackNavigationProp<RootStackParamList, "Map">;
 
@@ -27,25 +32,14 @@ interface Props {
   navigation: MapScreenNavigationProp;
 }
 
-// Bangalore center coordinates
-const BANGALORE_REGION: Region = {
-  latitude: 12.9716,
-  longitude: 77.5946,
-  latitudeDelta: 0.1,
-  longitudeDelta: 0.1,
-};
-
-const MapScreen: React.FC<Props> = ({ navigation }) => {
+const MapScreenContent: React.FC<Props> = ({ navigation }) => {
   const [selectedMerchant, setSelectedMerchant] = useState<Merchant | null>(
     null
   );
-  const [searchText, setSearchText] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [showMenu, setShowMenu] = useState(false);
-  const [showMerchantList, setShowMerchantList] = useState(false);
   const [userLocation, setUserLocation] = useState<LocationCoords | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const mapRef = useRef<MapView>(null);
+  const insets = useSafeAreaInsets();
 
   // MWA hooks
   const { authorization } = useAuthorization();
@@ -117,17 +111,8 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
       .sort((a, b) => (a.distance || 0) - (b.distance || 0));
   }, [merchants, userLocation]);
 
-  // Filter merchants based on search and category
-  const filteredMerchants = merchantsWithDistance.filter((merchant) => {
-    const matchesSearch =
-      merchant.name.toLowerCase().includes(searchText.toLowerCase()) ||
-      merchant.address.toLowerCase().includes(searchText.toLowerCase());
-    const matchesCategory =
-      selectedCategory === "All" || merchant.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
-
-  const categories = ["All", ...getCategories()];
+  // Use all merchants (filtering will be done in SearchScreen)
+  const filteredMerchants = merchantsWithDistance;
 
   const handleMarkerPress = (merchant: Merchant) => {
     setSelectedMerchant(merchant);
@@ -143,13 +128,12 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
-  const handleMenuPress = () => {
-    setShowMenu(true);
+  const handleSearchPress = () => {
+    navigation.navigate("Search");
   };
 
-  const handleRegisterBusiness = () => {
-    setShowMenu(false);
-    navigation.navigate("MerchantRegistration");
+  const handleWalletPress = () => {
+    navigation.navigate("UserProfile");
   };
 
   const renderStars = (rating: number) => {
@@ -175,59 +159,42 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header with search, wallet button, and menu */}
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* Clean header with search and profile */}
       <View style={styles.header}>
-        <View style={styles.searchContainer}>
-          <TextInput
-            placeholder="Search merchants..."
-            value={searchText}
-            onChangeText={setSearchText}
-            style={styles.searchInput}
-            containerStyle={styles.searchInputContainer}
-          />
-        </View>
-        <View style={styles.headerButtons}>
-          <TouchableOpacity
-            style={[
-              styles.walletButton,
-              authorization?.selectedAccount && styles.walletButtonConnected,
-            ]}
-            onPress={() => navigation.navigate("UserProfile")}
-          >
-            <Text style={styles.walletButtonText}>
-              {authorization?.selectedAccount ? "🔗" : "👤"}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.menuButton} onPress={handleMenuPress}>
-            <Text style={styles.menuIcon}>☰</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+        <TouchableOpacity
+          style={styles.searchButton}
+          onPress={handleSearchPress}
+          activeOpacity={0.7}
+        >
+          <Icon name="search" size={20} color={SolanaColors.text.secondary} />
+          <Text style={styles.searchButtonText}>
+            {UI_CONSTANTS.SEARCH_PLACEHOLDER}
+          </Text>
+        </TouchableOpacity>
 
-      {/* Category filter */}
-      <View style={styles.categoryContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {categories.map((category) => (
-            <TouchableOpacity
-              key={category}
-              style={[
-                styles.categoryButton,
-                selectedCategory === category && styles.categoryButtonActive,
-              ]}
-              onPress={() => setSelectedCategory(category)}
-            >
-              <Text
-                style={[
-                  styles.categoryText,
-                  selectedCategory === category && styles.categoryTextActive,
-                ]}
-              >
-                {category}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        <TouchableOpacity
+          style={[
+            styles.profileButton,
+            authorization?.selectedAccount && styles.profileButtonConnected,
+          ]}
+          onPress={handleWalletPress}
+          activeOpacity={0.7}
+        >
+          <Icon
+            name={
+              authorization?.selectedAccount
+                ? "account-balance-wallet"
+                : "person"
+            }
+            size={20}
+            color={
+              authorization?.selectedAccount
+                ? SolanaColors.white
+                : SolanaColors.text.primary
+            }
+          />
+        </TouchableOpacity>
       </View>
 
       {/* Map */}
@@ -235,8 +202,10 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
         <MapView
           ref={mapRef}
           style={styles.map}
-          initialRegion={BANGALORE_REGION}
-          customMapStyle={mapStyle}
+          initialRegion={UI_CONSTANTS.BANGALORE_REGION}
+          showsUserLocation={true}
+          showsMyLocationButton={false}
+          followsUserLocation={false}
         >
           {/* User location marker */}
           {userLocation && (
@@ -266,17 +235,46 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
           ))}
         </MapView>
 
-        {/* Floating List Toggle Button */}
+        {/* My Location Button */}
         <TouchableOpacity
-          style={styles.listToggleButton}
-          onPress={() => setShowMerchantList(true)}
+          style={[
+            styles.locationButton,
+            { bottom: insets.bottom + UI_CONSTANTS.BOTTOM_TAB_HEIGHT + 20 },
+          ]}
+          onPress={async () => {
+            try {
+              setLocationLoading(true);
+              const location = await locationService.getCurrentLocation();
+              setUserLocation(location);
+
+              if (mapRef.current) {
+                mapRef.current.animateToRegion(
+                  {
+                    latitude: location.latitude,
+                    longitude: location.longitude,
+                    latitudeDelta: 0.01,
+                    longitudeDelta: 0.01,
+                  },
+                  1000
+                );
+              }
+            } catch (error) {
+              showMessage({
+                message: "Location Error",
+                description: "Could not get your location",
+                type: "warning",
+              });
+            } finally {
+              setLocationLoading(false);
+            }
+          }}
+          activeOpacity={0.7}
         >
-          <Text style={styles.listToggleIcon}>📋</Text>
-          <Text style={styles.listToggleText}>List</Text>
+          <Icon name="my-location" size={20} color={SolanaColors.white} />
         </TouchableOpacity>
       </View>
 
-      {/* Merchant Details Modal */}
+      {/* Clean Merchant Details Modal */}
       <Modal
         visible={!!selectedMerchant}
         transparent={true}
@@ -310,17 +308,31 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
                     style={styles.closeButton}
                     onPress={() => setSelectedMerchant(null)}
                   >
-                    <Text style={styles.closeButtonText}>×</Text>
+                    <Icon
+                      name="close"
+                      size={20}
+                      color={SolanaColors.text.secondary}
+                    />
                   </TouchableOpacity>
                 </View>
 
                 <View style={styles.merchantDetails}>
                   <Text style={styles.merchantAddress}>
-                    📍 {selectedMerchant.address}
+                    <Icon
+                      name="location-on"
+                      size={14}
+                      color={SolanaColors.text.secondary}
+                    />{" "}
+                    {selectedMerchant.address}
                   </Text>
                   {(selectedMerchant as any).distance && (
                     <Text style={styles.merchantDistance}>
-                      🚶 {formatDistance((selectedMerchant as any).distance)}
+                      <Icon
+                        name="directions-walk"
+                        size={14}
+                        color={SolanaColors.text.secondary}
+                      />{" "}
+                      {formatDistance((selectedMerchant as any).distance)}
                     </Text>
                   )}
                   {selectedMerchant.description && (
@@ -330,7 +342,7 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
                   )}
 
                   <View style={styles.acceptedTokens}>
-                    <Text style={styles.tokensLabel}>Accepted:</Text>
+                    <Text style={styles.tokensLabel}>Accepts:</Text>
                     <View style={styles.tokensList}>
                       {selectedMerchant.acceptedTokens.map((token) => (
                         <View key={token} style={styles.tokenBadge}>
@@ -345,9 +357,8 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
                   <Button
                     title="Pay Now"
                     onPress={handlePayPress}
-                    variant="primary"
                     size="large"
-                    style={styles.payButton}
+                    fullWidth
                   />
                 </View>
               </>
@@ -355,182 +366,17 @@ const MapScreen: React.FC<Props> = ({ navigation }) => {
           </View>
         </View>
       </Modal>
-
-      {/* Menu Modal */}
-      <Modal
-        visible={showMenu}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowMenu(false)}
-      >
-        <View style={styles.menuOverlay}>
-          <View style={styles.menuContent}>
-            <Text style={styles.menuTitle}>Menu</Text>
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={handleRegisterBusiness}
-            >
-              <Text style={styles.menuItemText}>🏪 Register Business</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={() => setShowMenu(false)}
-            >
-              <Text style={styles.menuItemText}>❌ Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Merchant List Bottom Sheet */}
-      <MerchantListBottomSheet
-        merchants={filteredMerchants}
-        userLocation={userLocation}
-        isVisible={showMerchantList}
-        onClose={() => setShowMerchantList(false)}
-        onMerchantSelect={(merchant) => {
-          setShowMerchantList(false);
-          navigation.navigate("Payment", {
-            merchantId: merchant.id,
-            merchantName: merchant.name,
-          });
-        }}
-        calculateDistance={locationService.calculateDistance}
-      />
-    </SafeAreaView>
+    </View>
   );
 };
 
-// Dark map style
-const mapStyle = [
-  {
-    elementType: "geometry",
-    stylers: [{ color: "#1d2c4d" }],
-  },
-  {
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#8ec3b9" }],
-  },
-  {
-    elementType: "labels.text.stroke",
-    stylers: [{ color: "#1a3646" }],
-  },
-  {
-    featureType: "administrative.country",
-    elementType: "geometry.stroke",
-    stylers: [{ color: "#4b6878" }],
-  },
-  {
-    featureType: "administrative.land_parcel",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#64779e" }],
-  },
-  {
-    featureType: "administrative.province",
-    elementType: "geometry.stroke",
-    stylers: [{ color: "#4b6878" }],
-  },
-  {
-    featureType: "landscape.man_made",
-    elementType: "geometry.stroke",
-    stylers: [{ color: "#334e87" }],
-  },
-  {
-    featureType: "landscape.natural",
-    elementType: "geometry",
-    stylers: [{ color: "#023e58" }],
-  },
-  {
-    featureType: "poi",
-    elementType: "geometry",
-    stylers: [{ color: "#283d6a" }],
-  },
-  {
-    featureType: "poi",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#6f9ba5" }],
-  },
-  {
-    featureType: "poi",
-    elementType: "labels.text.stroke",
-    stylers: [{ color: "#1d2c4d" }],
-  },
-  {
-    featureType: "poi.park",
-    elementType: "geometry.fill",
-    stylers: [{ color: "#023e58" }],
-  },
-  {
-    featureType: "poi.park",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#3C7680" }],
-  },
-  {
-    featureType: "road",
-    elementType: "geometry",
-    stylers: [{ color: "#304a7d" }],
-  },
-  {
-    featureType: "road",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#98a5be" }],
-  },
-  {
-    featureType: "road",
-    elementType: "labels.text.stroke",
-    stylers: [{ color: "#1d2c4d" }],
-  },
-  {
-    featureType: "road.highway",
-    elementType: "geometry",
-    stylers: [{ color: "#2c6675" }],
-  },
-  {
-    featureType: "road.highway",
-    elementType: "geometry.stroke",
-    stylers: [{ color: "#255763" }],
-  },
-  {
-    featureType: "road.highway",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#b0d5ce" }],
-  },
-  {
-    featureType: "road.highway",
-    elementType: "labels.text.stroke",
-    stylers: [{ color: "#023e58" }],
-  },
-  {
-    featureType: "transit",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#98a5be" }],
-  },
-  {
-    featureType: "transit",
-    elementType: "labels.text.stroke",
-    stylers: [{ color: "#1d2c4d" }],
-  },
-  {
-    featureType: "transit.line",
-    elementType: "geometry.fill",
-    stylers: [{ color: "#283d6a" }],
-  },
-  {
-    featureType: "transit.station",
-    elementType: "geometry",
-    stylers: [{ color: "#3a4762" }],
-  },
-  {
-    featureType: "water",
-    elementType: "geometry",
-    stylers: [{ color: "#0e1626" }],
-  },
-  {
-    featureType: "water",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#4e6d70" }],
-  },
-];
+const MapScreen: React.FC<Props> = ({ navigation }) => {
+  return (
+    <SafeAreaProvider>
+      <MapScreenContent navigation={navigation} />
+    </SafeAreaProvider>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -538,94 +384,82 @@ const styles = StyleSheet.create({
     backgroundColor: SolanaColors.background.primary,
   },
 
+  // Clean header design
   header: {
     flexDirection: "row",
-    padding: Spacing.lg,
     alignItems: "center",
+    paddingHorizontal: Spacing.layout.screenPadding,
+    paddingVertical: Spacing.md,
+    backgroundColor: SolanaColors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: SolanaColors.border.secondary,
+    gap: Spacing.md,
   },
 
-  searchContainer: {
+  // Search button with clean design
+  searchButton: {
     flex: 1,
-    marginRight: Spacing.md,
-  },
-
-  searchInputContainer: {
-    marginBottom: 0,
-  },
-
-  searchInput: {
-    height: 40,
-  },
-
-  headerButtons: {
+    height: 48,
+    backgroundColor: SolanaColors.background.secondary,
+    borderRadius: Spacing.borderRadius.lg,
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.sm,
-  },
-
-  walletButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    backgroundColor: SolanaColors.button.secondary,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  walletButtonConnected: {
-    backgroundColor: SolanaColors.button.primary,
-  },
-
-  walletButtonText: {
-    color: SolanaColors.white,
-    fontSize: 18,
-  },
-
-  menuButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    backgroundColor: SolanaColors.button.primary,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  menuIcon: {
-    color: SolanaColors.white,
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-
-  categoryContainer: {
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.md,
+    shadowColor: SolanaColors.shadow.light,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
   },
 
-  categoryButton: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
+  searchIcon: {
+    fontSize: 18,
     marginRight: Spacing.sm,
-    borderRadius: Spacing.borderRadius.md,
-    backgroundColor: SolanaColors.background.secondary,
-    borderWidth: 1,
-    borderColor: SolanaColors.border.secondary,
-  },
-
-  categoryButtonActive: {
-    backgroundColor: SolanaColors.button.primary,
-    borderColor: SolanaColors.button.primary,
-  },
-
-  categoryText: {
     color: SolanaColors.text.secondary,
-    fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.medium,
   },
 
-  categoryTextActive: {
+  searchButtonText: {
+    flex: 1,
+    fontSize: Typography.fontSize.base,
+    color: SolanaColors.text.secondary,
+    fontWeight: Typography.fontWeight.regular,
+  },
+
+  // Profile button
+  profileButton: {
+    width: 48,
+    height: 48,
+    borderRadius: Spacing.borderRadius.lg,
+    backgroundColor: SolanaColors.background.secondary,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: SolanaColors.shadow.light,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+
+  profileButtonConnected: {
+    backgroundColor: SolanaColors.primary,
+  },
+
+  profileButtonText: {
+    color: SolanaColors.text.primary,
+    fontSize: 20,
+  },
+
+  profileButtonTextConnected: {
     color: SolanaColors.white,
   },
 
+  // Map container
   mapContainer: {
     flex: 1,
   },
@@ -634,58 +468,107 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
+  // Location button
+  locationButton: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: SolanaColors.white,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: SolanaColors.shadow.medium,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+
+  locationButtonIcon: {
+    fontSize: 24,
+    color: SolanaColors.text.primary,
+  },
+
+  // Marker styles
   markerContainer: {
     alignItems: "center",
   },
 
   marker: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: SolanaColors.button.primary,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: SolanaColors.primary,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 2,
+    borderWidth: 3,
     borderColor: SolanaColors.white,
-    ...createShadow(4),
+    shadowColor: SolanaColors.shadow.medium,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
 
   markerText: {
     color: SolanaColors.white,
-    fontSize: 16,
-    fontWeight: "bold",
+    fontSize: 18,
+    fontWeight: Typography.fontWeight.bold,
   },
 
   userLocationMarker: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     backgroundColor: SolanaColors.white,
     justifyContent: "center",
     alignItems: "center",
-    ...createShadow(3),
+    shadowColor: SolanaColors.shadow.medium,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
 
   userLocationDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: SolanaColors.button.primary,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: SolanaColors.primary,
   },
 
-  // Modal styles
+  // Clean modal design
   modalOverlay: {
     flex: 1,
-    backgroundColor: SolanaColors.background.overlay,
+    backgroundColor: SolanaColors.overlay.medium,
     justifyContent: "flex-end",
   },
 
   modalContent: {
-    backgroundColor: SolanaColors.background.card,
-    borderTopLeftRadius: Spacing.borderRadius.xl,
-    borderTopRightRadius: Spacing.borderRadius.xl,
+    backgroundColor: SolanaColors.white,
+    borderTopLeftRadius: Spacing.borderRadius["2xl"],
+    borderTopRightRadius: Spacing.borderRadius["2xl"],
     padding: Spacing["2xl"],
     maxHeight: "70%",
+    shadowColor: SolanaColors.shadow.dark,
+    shadowOffset: {
+      width: 0,
+      height: -4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 12,
   },
 
   modalHeader: {
@@ -702,7 +585,7 @@ const styles = StyleSheet.create({
   merchantName: {
     fontSize: Typography.fontSize["2xl"],
     fontWeight: Typography.fontWeight.bold,
-    color: SolanaColors.text.onCard,
+    color: SolanaColors.text.primary,
     marginBottom: Spacing.xs,
   },
 
@@ -738,9 +621,9 @@ const styles = StyleSheet.create({
   },
 
   closeButtonText: {
-    color: SolanaColors.text.secondary,
-    fontSize: 20,
-    fontWeight: "bold",
+    color: SolanaColors.text.primary,
+    fontSize: 18,
+    fontWeight: Typography.fontWeight.medium,
   },
 
   merchantDetails: {
@@ -749,13 +632,13 @@ const styles = StyleSheet.create({
 
   merchantAddress: {
     fontSize: Typography.fontSize.base,
-    color: SolanaColors.text.onCard,
+    color: SolanaColors.text.primary,
     marginBottom: Spacing.xs,
   },
 
   merchantDistance: {
     fontSize: Typography.fontSize.sm,
-    color: SolanaColors.button.primary,
+    color: SolanaColors.primary,
     fontWeight: Typography.fontWeight.medium,
     marginBottom: Spacing.md,
   },
@@ -779,14 +662,15 @@ const styles = StyleSheet.create({
 
   tokensList: {
     flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.sm,
   },
 
   tokenBadge: {
-    backgroundColor: SolanaColors.button.primary,
+    backgroundColor: SolanaColors.primary,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: Spacing.borderRadius.md,
-    marginRight: Spacing.sm,
   },
 
   tokenText: {
@@ -797,71 +681,6 @@ const styles = StyleSheet.create({
 
   modalActions: {
     paddingTop: Spacing.lg,
-  },
-
-  payButton: {
-    width: "100%",
-  },
-
-  // Menu modal styles
-  menuOverlay: {
-    flex: 1,
-    backgroundColor: SolanaColors.background.overlay,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  menuContent: {
-    backgroundColor: SolanaColors.background.card,
-    borderRadius: Spacing.borderRadius.lg,
-    padding: Spacing["2xl"],
-    width: "80%",
-    maxWidth: 300,
-  },
-
-  menuTitle: {
-    fontSize: Typography.fontSize.xl,
-    fontWeight: Typography.fontWeight.bold,
-    color: SolanaColors.text.onCard,
-    textAlign: "center",
-    marginBottom: Spacing["2xl"],
-  },
-
-  menuItem: {
-    paddingVertical: Spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: SolanaColors.border.light,
-  },
-
-  menuItemText: {
-    fontSize: Typography.fontSize.base,
-    color: SolanaColors.text.onCard,
-    textAlign: "center",
-  },
-
-  // List toggle button styles
-  listToggleButton: {
-    position: "absolute",
-    bottom: 20,
-    right: 20,
-    backgroundColor: SolanaColors.button.primary,
-    borderRadius: 25,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    flexDirection: "row",
-    alignItems: "center",
-    ...createShadow(4),
-  },
-
-  listToggleIcon: {
-    fontSize: 18,
-    marginRight: Spacing.xs,
-  },
-
-  listToggleText: {
-    color: SolanaColors.white,
-    fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.medium,
   },
 });
 

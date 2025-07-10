@@ -16,6 +16,7 @@ import { useUser, useTransactions } from "../hooks/firebase";
 import { useAuthorization } from "../hooks/useAuthorization";
 import { ConnectWalletButton } from "../components/ConnectWalletButton";
 import { AccountInfo } from "../components/AccountInfo";
+import Icon from "react-native-vector-icons/MaterialIcons";
 
 export const UserProfileScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -53,7 +54,7 @@ export const UserProfileScreen: React.FC = () => {
         type: "success",
         duration: 2000,
       });
-      navigation.navigate("Map" as never);
+      navigation.navigate("Main" as never);
     } catch (error) {
       console.error("Failed to disconnect:", error);
       showMessage({
@@ -89,7 +90,11 @@ export const UserProfileScreen: React.FC = () => {
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
-            <Text style={styles.backButtonText}>←</Text>
+            <Icon
+              name="arrow-back"
+              size={24}
+              color={SolanaColors.text.primary}
+            />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Profile</Text>
           <TouchableOpacity
@@ -236,16 +241,16 @@ const styles = StyleSheet.create({
     color: SolanaColors.text.primary,
   },
   disconnectButton: {
-    padding: Spacing.component.sm,
+    padding: Spacing.sm,
   },
   disconnectButtonText: {
     fontSize: Typography.fontSize.sm,
-    color: SolanaColors.accent.danger,
+    color: SolanaColors.status.error,
     fontWeight: Typography.fontWeight.medium,
   },
   walletCard: {
     margin: Spacing.layout.screenPadding,
-    marginTop: Spacing.component.md,
+    marginTop: Spacing.md,
   },
 
   walletMessage: {
@@ -258,15 +263,15 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.lg,
     fontWeight: Typography.fontWeight.bold,
     color: SolanaColors.text.primary,
-    marginBottom: Spacing.component.md,
+    marginBottom: Spacing.md,
   },
   walletInfo: {
-    marginBottom: Spacing.component.lg,
+    marginBottom: Spacing.lg,
   },
   walletLabel: {
     fontSize: Typography.fontSize.sm,
     color: SolanaColors.text.secondary,
-    marginBottom: Spacing.component.xs,
+    marginBottom: Spacing.xs,
   },
   walletAddress: {
     fontSize: Typography.fontSize.base,
@@ -280,21 +285,21 @@ const styles = StyleSheet.create({
   balanceItem: {
     flex: 1,
     alignItems: "center",
-    padding: Spacing.component.md,
+    padding: Spacing.md,
     backgroundColor: SolanaColors.background.secondary,
     borderRadius: 12,
-    marginHorizontal: Spacing.component.xs,
+    marginHorizontal: Spacing.xs,
   },
   balanceLabel: {
     fontSize: Typography.fontSize.sm,
     color: SolanaColors.text.secondary,
-    marginBottom: Spacing.component.xs,
+    marginBottom: Spacing.xs,
   },
   balanceValue: {
     fontSize: Typography.fontSize.lg,
     fontWeight: Typography.fontWeight.bold,
-    color: SolanaColors.accent.primary,
-    marginBottom: Spacing.component.xs,
+    color: SolanaColors.primary,
+    marginBottom: Spacing.xs,
   },
   balanceUSD: {
     fontSize: Typography.fontSize.sm,
@@ -312,16 +317,16 @@ const styles = StyleSheet.create({
   statItem: {
     width: "48%",
     alignItems: "center",
-    padding: Spacing.component.md,
+    padding: Spacing.md,
     backgroundColor: SolanaColors.background.secondary,
     borderRadius: 12,
-    marginBottom: Spacing.component.sm,
+    marginBottom: Spacing.sm,
   },
   statValue: {
     fontSize: Typography.fontSize.lg,
     fontWeight: Typography.fontWeight.bold,
-    color: SolanaColors.accent.secondary,
-    marginBottom: Spacing.component.xs,
+    color: SolanaColors.secondary,
+    marginBottom: Spacing.xs,
   },
   statLabel: {
     fontSize: Typography.fontSize.sm,
@@ -330,36 +335,36 @@ const styles = StyleSheet.create({
   transactionsCard: {
     margin: Spacing.layout.screenPadding,
     marginTop: 0,
-    marginBottom: Spacing.component.xl,
+    marginBottom: Spacing.xl,
   },
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: Spacing.component.md,
+    marginBottom: Spacing.md,
   },
   viewAllText: {
     fontSize: Typography.fontSize.sm,
-    color: SolanaColors.accent.primary,
+    color: SolanaColors.primary,
     fontWeight: Typography.fontWeight.medium,
   },
   loadingText: {
     textAlign: "center",
     color: SolanaColors.text.secondary,
     fontStyle: "italic",
-    padding: Spacing.component.lg,
+    padding: Spacing.lg,
   },
   emptyText: {
     textAlign: "center",
     color: SolanaColors.text.secondary,
     fontStyle: "italic",
-    padding: Spacing.component.lg,
+    padding: Spacing.lg,
   },
   transactionItem: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: Spacing.component.md,
+    paddingVertical: Spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: SolanaColors.border.primary,
   },
@@ -370,7 +375,7 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.base,
     fontWeight: Typography.fontWeight.medium,
     color: SolanaColors.text.primary,
-    marginBottom: Spacing.component.xs,
+    marginBottom: Spacing.xs,
   },
   transactionDate: {
     fontSize: Typography.fontSize.sm,
@@ -383,7 +388,7 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.base,
     fontWeight: Typography.fontWeight.bold,
     color: SolanaColors.text.primary,
-    marginBottom: Spacing.component.xs,
+    marginBottom: Spacing.xs,
   },
   transactionToken: {
     fontSize: Typography.fontSize.sm,

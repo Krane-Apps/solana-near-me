@@ -7,17 +7,18 @@ import {
   ViewStyle,
   TextStyle,
 } from "react-native";
-import { SolanaColors, Typography, Spacing, CommonStyles } from "../../theme";
+import { SolanaColors, Typography, Spacing } from "../../theme";
 
 export interface ButtonProps {
   title: string;
   onPress: () => void;
-  variant?: "primary" | "secondary" | "outline";
+  variant?: "primary" | "secondary" | "outline" | "ghost";
   size?: "small" | "medium" | "large";
   disabled?: boolean;
   loading?: boolean;
   style?: ViewStyle;
   textStyle?: TextStyle;
+  fullWidth?: boolean;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -29,12 +30,14 @@ export const Button: React.FC<ButtonProps> = ({
   loading = false,
   style,
   textStyle,
+  fullWidth = false,
 }) => {
   const buttonStyle = [
     styles.base,
     styles[variant],
     styles[size],
     disabled && styles.disabled,
+    fullWidth && styles.fullWidth,
     style,
   ];
 
@@ -56,9 +59,9 @@ export const Button: React.FC<ButtonProps> = ({
       {loading ? (
         <ActivityIndicator
           color={
-            variant === "outline"
-              ? SolanaColors.button.primary
-              : SolanaColors.button.text
+            variant === "outline" || variant === "ghost"
+              ? SolanaColors.primary
+              : SolanaColors.white
           }
           size="small"
         />
@@ -71,52 +74,76 @@ export const Button: React.FC<ButtonProps> = ({
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: Spacing.component.button.borderRadius,
+    borderRadius: Spacing.borderRadius.md,
     justifyContent: "center",
     alignItems: "center",
     flexDirection: "row",
+    shadowColor: SolanaColors.shadow.light,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
   },
 
-  // Variants
+  fullWidth: {
+    width: "100%",
+  },
+
+  // Variants - Airbnb-inspired button styles
   primary: {
-    backgroundColor: SolanaColors.button.primary,
+    backgroundColor: SolanaColors.primary,
     borderWidth: 0,
+    shadowColor: SolanaColors.primary,
+    shadowOpacity: 0.3,
   },
 
   secondary: {
-    backgroundColor: SolanaColors.button.secondary,
-    borderWidth: 0,
+    backgroundColor: SolanaColors.background.secondary,
+    borderWidth: 1,
+    borderColor: SolanaColors.border.primary,
   },
 
   outline: {
+    backgroundColor: SolanaColors.white,
+    borderWidth: 1,
+    borderColor: SolanaColors.primary,
+  },
+
+  ghost: {
     backgroundColor: "transparent",
-    borderWidth: 2,
-    borderColor: SolanaColors.button.primary,
+    borderWidth: 0,
+    shadowOpacity: 0,
+    elevation: 0,
   },
 
   // Sizes
   small: {
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
-    height: 36,
+    minHeight: 36,
   },
 
   medium: {
     paddingHorizontal: Spacing.component.button.paddingHorizontal,
     paddingVertical: Spacing.component.button.paddingVertical,
-    height: Spacing.layout.buttonHeight,
+    minHeight: Spacing.component.button.minHeight,
   },
 
   large: {
     paddingHorizontal: Spacing["3xl"],
     paddingVertical: Spacing.lg,
-    height: 56,
+    minHeight: 56,
   },
 
   // Disabled state
   disabled: {
     backgroundColor: SolanaColors.button.disabled,
     borderColor: SolanaColors.button.disabled,
+    shadowOpacity: 0,
+    elevation: 0,
   },
 
   // Text styles
@@ -131,12 +158,17 @@ const styles = StyleSheet.create({
   },
 
   secondaryText: {
-    color: SolanaColors.button.text,
+    color: SolanaColors.button.textSecondary,
     fontSize: Typography.fontSize.base,
   },
 
   outlineText: {
-    color: SolanaColors.button.primary,
+    color: SolanaColors.primary,
+    fontSize: Typography.fontSize.base,
+  },
+
+  ghostText: {
+    color: SolanaColors.primary,
     fontSize: Typography.fontSize.base,
   },
 
@@ -153,6 +185,6 @@ const styles = StyleSheet.create({
   },
 
   disabledText: {
-    color: SolanaColors.text.secondary,
+    color: SolanaColors.text.tertiary,
   },
 });

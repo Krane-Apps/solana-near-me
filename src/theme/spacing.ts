@@ -1,45 +1,44 @@
-// Solana NearMe App - Spacing System
-
+// Airbnb-inspired Spacing System
 export const Spacing = {
-  // Base spacing unit (4px)
-  base: 4,
-  
-  // Spacing scale
-  xs: 4,   // 4px
-  sm: 8,   // 8px
-  md: 12,  // 12px
-  lg: 16,  // 16px
-  xl: 20,  // 20px
-  '2xl': 24, // 24px
-  '3xl': 32, // 32px
-  '4xl': 40, // 40px
-  '5xl': 48, // 48px
-  '6xl': 64, // 64px
-  
-  // Common layout spacing
+  // Base spacing scale - more generous than before
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  '2xl': 24,
+  '3xl': 32,
+  '4xl': 40,
+  '5xl': 48,
+  '6xl': 64,
+
+  // Layout spacing - Airbnb-style generous spacing
   layout: {
-    screenPadding: 20,     // Standard screen padding
-    cardPadding: 16,       // Card internal padding
-    sectionGap: 24,        // Gap between sections
-    itemGap: 12,           // Gap between items
-    buttonHeight: 48,      // Standard button height
-    inputHeight: 48,       // Standard input height
+    screenPadding: 20,        // Main screen padding
+    sectionSpacing: 32,       // Between major sections
+    cardSpacing: 16,          // Between cards
+    inputHeight: 48,          // Standard input height
+    buttonHeight: 48,         // Standard button height
+    headerHeight: 60,         // Header height
+    tabBarHeight: 80,         // Tab bar height
+    listItemHeight: 80,       // List item height
   },
-  
-  // Component specific spacing
+
+  // Component spacing - optimized for touch and visual hierarchy
   component: {
+    // Card spacing
+    card: {
+      padding: 20,
+      margin: 12,
+      borderRadius: 12,
+    },
+    
     // Button spacing
     button: {
       paddingHorizontal: 24,
       paddingVertical: 12,
       borderRadius: 8,
-    },
-    
-    // Card spacing
-    card: {
-      padding: 16,
-      margin: 12,
-      borderRadius: 12,
+      minHeight: 48,
     },
     
     // Input spacing
@@ -47,40 +46,64 @@ export const Spacing = {
       paddingHorizontal: 16,
       paddingVertical: 12,
       borderRadius: 8,
+      height: 48,
     },
     
-    // Map spacing
-    map: {
-      markerSize: 40,
-      calloutPadding: 12,
+    // List item spacing
+    listItem: {
+      paddingHorizontal: 20,
+      paddingVertical: 16,
+      marginBottom: 8,
     },
     
     // Modal spacing
     modal: {
-      padding: 20,
+      padding: 24,
       borderRadius: 16,
-    }
+    },
   },
-  
-  // Border radius scale
+
+  // Border radius - modern, consistent rounding
   borderRadius: {
-    none: 0,
-    sm: 4,
+    xs: 4,
+    sm: 6,
     md: 8,
     lg: 12,
     xl: 16,
     '2xl': 20,
+    '3xl': 24,
     full: 9999,
   },
-  
-  // Shadow/elevation
+
+  // Elevation/Shadow levels
   elevation: {
     none: 0,
     sm: 2,
     md: 4,
     lg: 8,
     xl: 12,
-  }
-} as const;
+    '2xl': 16,
+  },
+
+  // Icon sizes
+  icon: {
+    xs: 16,
+    sm: 20,
+    md: 24,
+    lg: 32,
+    xl: 40,
+    '2xl': 48,
+  },
+
+  // Common measurements
+  common: {
+    searchBarHeight: 48,
+    bottomTabHeight: 80,
+    headerHeight: 60,
+    statusBarHeight: 44,
+    listItemMinHeight: 64,
+    touchableMinSize: 44,
+  },
+};
 
 export type SpacingType = typeof Spacing; 

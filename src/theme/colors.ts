@@ -1,84 +1,96 @@
-// Solana NearMe App - Color Theme System
-// Based on Solana brand colors: Purple #9945FF, Teal #00FFA3, White #FFFFFF
-
+// Airbnb-inspired Color Palette
 export const SolanaColors = {
-  // Primary Solana brand colors
-  primary: '#9945FF',      // Solana Purple
-  accent: '#00FFA3',       // Solana Teal  
-  white: '#FFFFFF',        // Pure White
+  // Primary brand colors (keeping Solana accent but using Airbnb-style primary)
+  primary: '#FF5A5F', // Airbnb coral/pink
+  secondary: '#00A699', // Airbnb teal
+  accent: '#14F195', // Keep Solana green for crypto context
   
-  // Background colors
+  // Background colors - clean whites and light grays
   background: {
-    primary: '#1a1a1a',     // Dark background
-    secondary: '#2a2a2a',   // Slightly lighter dark
-    card: '#FFFFFF',        // White cards
-    overlay: 'rgba(0, 0, 0, 0.5)', // Modal overlay
+    primary: '#FFFFFF', // Pure white
+    secondary: '#F7F7F7', // Very light gray
+    tertiary: '#FAFAFA', // Off-white
+    card: '#FFFFFF', // Pure white for cards
   },
   
-  // Text colors
+  // Text colors - good contrast and hierarchy
   text: {
-    primary: '#FFFFFF',     // Primary text (white on dark)
-    secondary: '#B0B0B0',   // Secondary text (gray)
-    onCard: '#1a1a1a',      // Text on white cards
-    accent: '#00FFA3',      // Accent text (teal)
-    error: '#FF4444',       // Error text
+    primary: '#222222', // Dark gray (Airbnb style)
+    secondary: '#717171', // Medium gray
+    tertiary: '#B0B0B0', // Light gray
+    onCard: '#222222', // Dark text on white cards
+    inverse: '#FFFFFF', // White text
   },
   
   // Button colors
   button: {
-    primary: '#00FFA3',     // Teal buttons
-    primaryPressed: '#00CC82', // Darker teal when pressed
-    secondary: '#9945FF',   // Purple buttons
-    secondaryPressed: '#7A37CC', // Darker purple when pressed
-    disabled: '#666666',    // Disabled button
-    text: '#FFFFFF',        // Button text
+    primary: '#FF5A5F', // Coral primary button
+    secondary: '#F7F7F7', // Light gray secondary
+    tertiary: '#FFFFFF', // White tertiary
+    disabled: '#DDDDDD', // Light gray disabled
+    text: '#FFFFFF', // White text on buttons
+    textSecondary: '#222222', // Dark text on light buttons
   },
   
   // Border colors
   border: {
-    primary: '#9945FF',     // Purple borders
-    secondary: '#444444',   // Gray borders
-    accent: '#00FFA3',      // Teal borders
-    light: '#E0E0E0',       // Light borders for cards
+    primary: '#DDDDDD', // Light gray borders
+    secondary: '#EBEBEB', // Very light borders
+    light: '#F0F0F0', // Ultra light borders
   },
   
   // Status colors
   status: {
-    success: '#00FFA3',     // Success (teal)
-    warning: '#FFB800',     // Warning (amber)
-    error: '#FF4444',       // Error (red)
-    info: '#9945FF',        // Info (purple)
+    success: '#00A699', // Airbnb teal
+    error: '#C13515', // Airbnb red
+    warning: '#FFB400', // Warm yellow
+    info: '#0084FF', // Blue
   },
   
-  // Map specific colors
-  map: {
-    background: '#1a1a1a',  // Dark map background
-    marker: '#00FFA3',      // Teal markers
-    markerSelected: '#9945FF', // Purple for selected marker
-    userLocation: '#FFFFFF', // White for user location
+  // Utility colors
+  white: '#FFFFFF',
+  black: '#000000',
+  transparent: 'transparent',
+  
+  // Shadow colors
+  shadow: {
+    light: 'rgba(0, 0, 0, 0.1)',
+    medium: 'rgba(0, 0, 0, 0.15)',
+    dark: 'rgba(0, 0, 0, 0.25)',
   },
   
-  // Reward system colors
-  reward: {
-    background: '#9945FF',  // Purple reward background
-    card: '#FFFFFF',        // White reward card
-    accent: '#00FFA3',      // Teal accents
-    gold: '#FFD700',        // Gold for special rewards
-  }
-} as const;
+  // Overlay colors
+  overlay: {
+    light: 'rgba(0, 0, 0, 0.3)',
+    medium: 'rgba(0, 0, 0, 0.5)',
+    dark: 'rgba(0, 0, 0, 0.7)',
+  },
+};
 
-// Type for the color system
 export type SolanaColorsType = typeof SolanaColors;
 
-// Helper function to get opacity variants
+// Utility function to add opacity to colors
 export const withOpacity = (color: string, opacity: number): string => {
-  // Convert hex to rgba
-  const hex = color.replace('#', '');
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
+  // Handle hex colors
+  if (color.startsWith('#')) {
+    const hex = color.slice(1);
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+  }
   
-  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+  // Handle rgba colors
+  if (color.startsWith('rgba')) {
+    return color.replace(/[\d\.]+\)$/g, `${opacity})`);
+  }
+  
+  // Handle rgb colors
+  if (color.startsWith('rgb')) {
+    return color.replace('rgb', 'rgba').replace(')', `, ${opacity})`);
+  }
+  
+  return color;
 };
 
 // Common color combinations
