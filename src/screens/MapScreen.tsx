@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Modal,
   ScrollView,
+  Platform,
 } from "react-native";
 import {
   SafeAreaProvider,
@@ -17,7 +18,12 @@ import MapView, { Marker, Region } from "react-native-maps";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { Button, Card } from "../components/ui";
-import { SolanaColors, Typography, Spacing } from "../theme";
+import {
+  SolanaColors,
+  Typography,
+  Spacing,
+  createDarkGlassEffect,
+} from "../theme";
 import { mockMerchants, Merchant } from "../data/merchants";
 import { useMerchants } from "../firebase";
 import { seedDataIfNeeded } from "../firebase/seedData";
@@ -129,7 +135,7 @@ const MapScreenContent: React.FC<Props> = ({ navigation }) => {
   };
 
   const handleSearchPress = () => {
-    navigation.navigate("Search");
+    navigation.navigate("Dashboard");
   };
 
   const handleWalletPress = () => {
@@ -206,6 +212,7 @@ const MapScreenContent: React.FC<Props> = ({ navigation }) => {
           showsUserLocation={true}
           showsMyLocationButton={false}
           followsUserLocation={false}
+          userInterfaceStyle="dark"
         >
           {/* User location marker */}
           {userLocation && (
@@ -239,7 +246,7 @@ const MapScreenContent: React.FC<Props> = ({ navigation }) => {
         <TouchableOpacity
           style={[
             styles.locationButton,
-            { bottom: insets.bottom + UI_CONSTANTS.BOTTOM_TAB_HEIGHT + 20 },
+            { bottom: insets.bottom + UI_CONSTANTS.BOTTOM_TAB_HEIGHT + 40 },
           ]}
           onPress={async () => {
             try {
@@ -384,35 +391,29 @@ const styles = StyleSheet.create({
     backgroundColor: SolanaColors.background.primary,
   },
 
-  // Clean header design
+  // Clean header design with glass effect
   header: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: Spacing.layout.screenPadding,
     paddingVertical: Spacing.md,
-    backgroundColor: SolanaColors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: SolanaColors.border.secondary,
+    ...createDarkGlassEffect(0.25),
+    borderBottomWidth: 0,
+    borderTopWidth: 0,
+    borderLeftWidth: 0,
+    borderRightWidth: 0,
     gap: Spacing.md,
   },
 
-  // Search button with clean design
+  // Search button with enhanced glass effect
   searchButton: {
     flex: 1,
     height: 48,
-    backgroundColor: SolanaColors.background.secondary,
+    ...createDarkGlassEffect(0.3),
     borderRadius: Spacing.borderRadius.lg,
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: Spacing.lg,
-    shadowColor: SolanaColors.shadow.light,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
   },
 
   searchIcon: {
@@ -428,26 +429,19 @@ const styles = StyleSheet.create({
     fontWeight: Typography.fontWeight.regular,
   },
 
-  // Profile button
+  // Profile button with enhanced glass effect
   profileButton: {
     width: 48,
     height: 48,
     borderRadius: Spacing.borderRadius.lg,
-    backgroundColor: SolanaColors.background.secondary,
+    ...createDarkGlassEffect(0.3),
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: SolanaColors.shadow.light,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
   },
 
   profileButtonConnected: {
-    backgroundColor: SolanaColors.primary,
+    backgroundColor: `${SolanaColors.primary}80`, // Semi-transparent primary
+    borderColor: `${SolanaColors.primary}40`,
   },
 
   profileButtonText: {
@@ -468,7 +462,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  // Location button
+  // Location button with enhanced glass effect
   locationButton: {
     position: "absolute",
     bottom: 20,
@@ -476,17 +470,9 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: SolanaColors.white,
+    ...createDarkGlassEffect(0.35),
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: SolanaColors.shadow.medium,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 8,
   },
 
   locationButtonIcon: {
@@ -507,7 +493,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 3,
-    borderColor: SolanaColors.white,
+    borderColor: SolanaColors.background.primary,
     shadowColor: SolanaColors.shadow.medium,
     shadowOffset: {
       width: 0,
@@ -519,7 +505,7 @@ const styles = StyleSheet.create({
   },
 
   markerText: {
-    color: SolanaColors.white,
+    color: SolanaColors.text.primary,
     fontSize: 18,
     fontWeight: Typography.fontWeight.bold,
   },
@@ -528,7 +514,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: SolanaColors.white,
+    backgroundColor: SolanaColors.primary,
     justifyContent: "center",
     alignItems: "center",
     shadowColor: SolanaColors.shadow.medium,
@@ -545,30 +531,22 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: SolanaColors.primary,
+    backgroundColor: SolanaColors.background.primary,
   },
 
   // Clean modal design
   modalOverlay: {
     flex: 1,
-    backgroundColor: SolanaColors.overlay.medium,
+    backgroundColor: SolanaColors.overlay.dark,
     justifyContent: "flex-end",
   },
 
   modalContent: {
-    backgroundColor: SolanaColors.white,
+    ...createDarkGlassEffect(0.3),
     borderTopLeftRadius: Spacing.borderRadius["2xl"],
     borderTopRightRadius: Spacing.borderRadius["2xl"],
     padding: Spacing["2xl"],
     maxHeight: "70%",
-    shadowColor: SolanaColors.shadow.dark,
-    shadowOffset: {
-      width: 0,
-      height: -4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 12,
   },
 
   modalHeader: {
@@ -601,7 +579,7 @@ const styles = StyleSheet.create({
   },
 
   ratingStars: {
-    color: "#FFD700",
+    color: SolanaColors.accent,
     fontSize: Typography.fontSize.base,
     marginRight: Spacing.sm,
   },
@@ -615,7 +593,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: SolanaColors.background.secondary,
+    ...createDarkGlassEffect(0.2),
     justifyContent: "center",
     alignItems: "center",
   },
@@ -667,14 +645,14 @@ const styles = StyleSheet.create({
   },
 
   tokenBadge: {
-    backgroundColor: SolanaColors.primary,
+    ...createDarkGlassEffect(0.15),
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: Spacing.borderRadius.md,
   },
 
   tokenText: {
-    color: SolanaColors.white,
+    color: SolanaColors.text.primary,
     fontSize: Typography.fontSize.xs,
     fontWeight: Typography.fontWeight.medium,
   },

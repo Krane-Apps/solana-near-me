@@ -1,69 +1,61 @@
-// Airbnb-inspired Color Palette
+// Solana Official Branding - Dark Mode
+
 export const SolanaColors = {
-  // Primary brand colors (keeping Solana accent but using Airbnb-style primary)
-  primary: '#FF5A5F', // Airbnb coral/pink
-  secondary: '#00A699', // Airbnb teal
-  accent: '#14F195', // Keep Solana green for crypto context
+  primary: '#9945FF',
+  secondary: '#14F195',
+  accent: '#14F195',
   
-  // Background colors - clean whites and light grays
   background: {
-    primary: '#FFFFFF', // Pure white
-    secondary: '#F7F7F7', // Very light gray
-    tertiary: '#FAFAFA', // Off-white
-    card: '#FFFFFF', // Pure white for cards
+    primary: '#000000',
+    secondary: '#121212',
+    tertiary: '#1E1E1E',
+    card: '#1A1A1A',
   },
   
-  // Text colors - good contrast and hierarchy
   text: {
-    primary: '#222222', // Dark gray (Airbnb style)
-    secondary: '#717171', // Medium gray
-    tertiary: '#B0B0B0', // Light gray
-    onCard: '#222222', // Dark text on white cards
-    inverse: '#FFFFFF', // White text
+    primary: '#FFFFFF',
+    secondary: '#E0E0E0',
+    tertiary: '#B0B0B0',
+    onCard: '#FFFFFF',
+    inverse: '#000000',
   },
   
-  // Button colors
   button: {
-    primary: '#FF5A5F', // Coral primary button
-    secondary: '#F7F7F7', // Light gray secondary
-    tertiary: '#FFFFFF', // White tertiary
-    disabled: '#DDDDDD', // Light gray disabled
-    text: '#FFFFFF', // White text on buttons
-    textSecondary: '#222222', // Dark text on light buttons
+    primary: '#9945FF',
+    secondary: '#1A1A1A',
+    tertiary: '#121212',
+    disabled: '#333333',
+    text: '#FFFFFF',
+    textSecondary: '#FFFFFF',
   },
   
-  // Border colors
   border: {
-    primary: '#DDDDDD', // Light gray borders
-    secondary: '#EBEBEB', // Very light borders
-    light: '#F0F0F0', // Ultra light borders
+    primary: '#333333',
+    secondary: '#2A2A2A',
+    light: '#242424',
   },
   
-  // Status colors
   status: {
-    success: '#00A699', // Airbnb teal
-    error: '#C13515', // Airbnb red
-    warning: '#FFB400', // Warm yellow
-    info: '#0084FF', // Blue
+    success: '#14F195',
+    error: '#FF3860',
+    warning: '#FFB400',
+    info: '#9945FF',
   },
   
-  // Utility colors
   white: '#FFFFFF',
   black: '#000000',
   transparent: 'transparent',
   
-  // Shadow colors
   shadow: {
-    light: 'rgba(0, 0, 0, 0.1)',
-    medium: 'rgba(0, 0, 0, 0.15)',
-    dark: 'rgba(0, 0, 0, 0.25)',
+    light: 'rgba(255,255,255,0.05)',
+    medium: 'rgba(255,255,255,0.1)',
+    dark: 'rgba(255,255,255,0.15)',
   },
   
-  // Overlay colors
   overlay: {
-    light: 'rgba(0, 0, 0, 0.3)',
-    medium: 'rgba(0, 0, 0, 0.5)',
-    dark: 'rgba(0, 0, 0, 0.7)',
+    light: 'rgba(0,0,0,0.3)',
+    medium: 'rgba(0,0,0,0.6)',
+    dark: 'rgba(0,0,0,0.8)',
   },
 };
 
@@ -102,18 +94,18 @@ export const ColorCombinations = {
   },
   secondaryButton: {
     background: SolanaColors.button.secondary,
-    text: SolanaColors.button.text,
-    border: SolanaColors.button.secondary,
+    text: SolanaColors.button.textSecondary,
+    border: SolanaColors.border.primary,
   },
   card: {
     background: SolanaColors.background.card,
     text: SolanaColors.text.onCard,
-    border: SolanaColors.border.light,
+    border: SolanaColors.border.primary,
   },
   input: {
     background: SolanaColors.background.secondary,
     text: SolanaColors.text.primary,
     border: SolanaColors.border.primary,
-    placeholder: SolanaColors.text.secondary,
+    placeholder: SolanaColors.text.tertiary,
   }
 } as const; 

@@ -29,6 +29,35 @@ export const createShadow = (elevation: number) => ({
   elevation, // Android
 });
 
+// Glass effect utilities
+export const createGlassEffect = (opacity: number = 0.15) => ({
+  backgroundColor: `rgba(255, 255, 255, ${opacity})`,
+  borderWidth: 1,
+  borderColor: `rgba(255, 255, 255, ${opacity * 0.5})`,
+  shadowColor: 'rgba(0, 0, 0, 0.3)',
+  shadowOffset: {
+    width: 0,
+    height: 8,
+  },
+  shadowOpacity: 0.2,
+  shadowRadius: 16,
+  elevation: 8,
+});
+
+export const createDarkGlassEffect = (opacity: number = 0.2) => ({
+  backgroundColor: `rgba(18, 18, 18, ${opacity + 0.1})`, // Slightly lighter dark background
+  borderWidth: 1,
+  borderColor: `rgba(255, 255, 255, ${opacity * 0.4})`, // More visible border
+  shadowColor: 'rgba(0, 0, 0, 0.8)',
+  shadowOffset: {
+    width: 0,
+    height: 8,
+  },
+  shadowOpacity: 0.4,
+  shadowRadius: 20,
+  elevation: 12,
+});
+
 // Common style combinations
 export const CommonStyles = {
   // Container styles
@@ -84,11 +113,11 @@ export const CommonStyles = {
   primaryText: {
     color: SolanaColors.text.primary,
     fontSize: Typography.fontSize.base,
-    fontWeight: Typography.fontWeight.normal,
+    fontWeight: Typography.fontWeight.regular,
   },
   
   accentText: {
-    color: SolanaColors.text.accent,
+    color: SolanaColors.text.secondary,
     fontSize: Typography.fontSize.base,
     fontWeight: Typography.fontWeight.medium,
   },

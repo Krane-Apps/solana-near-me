@@ -11,6 +11,10 @@ A React Native mobile application that enables crypto payments at local merchant
 - **NFT Badges**: Collect achievement-based NFT rewards
 - **Dark Theme**: Professional Solana-branded UI
 
+## 📱 Platform Support
+
+**⚠️ ANDROID ONLY**: This app is currently configured for Android devices only. Do not attempt to run the iOS version as it is not supported and will cause build errors.
+
 ## 🛠️ Tech Stack
 
 - **React Native** with Expo (Development Build)
@@ -62,11 +66,8 @@ Use environment variables or secure key management.
 # Generate native directories
 npx expo prebuild
 
-# Run on Android
+# Run on Android (ONLY SUPPORTED PLATFORM)
 npx expo run:android
-
-# Or run on iOS
-npx expo run:ios
 ```
 
 ## 🗺️ App Structure

@@ -162,14 +162,14 @@ const MerchantListScreen: React.FC<Props> = ({ navigation }) => {
       id: "mobile-recharge",
       title: "Mobile Recharge",
       icon: "phone-android",
-      color: "#FF6B6B",
+      color: SolanaColors.primary,
       onPress: handleMobileRecharge,
     },
     {
       id: "gift-cards",
       title: "Gift Cards",
       icon: "card-giftcard",
-      color: "#4ECDC4",
+      color: SolanaColors.secondary,
       onPress: () => handleCategoryPress("Gift Cards"),
     },
   ];
@@ -249,13 +249,6 @@ const MerchantListScreen: React.FC<Props> = ({ navigation }) => {
         }
       >
         {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerContent}>
-            <Text style={styles.headerSubtitle}>
-              {merchantsWithDistance.length} merchants nearby
-            </Text>
-          </View>
-        </View>
 
         {/* Explore Section */}
         <View style={styles.exploreSection}>
@@ -325,6 +318,9 @@ const MerchantListScreen: React.FC<Props> = ({ navigation }) => {
               )}
             </View>
           </View>
+          <Text style={styles.merchantsSubtitle}>
+            {merchantsWithDistance.length} merchants nearby
+          </Text>
 
           {merchantsWithDistance.length > 0 ? (
             merchantsWithDistance.map((merchant) => (
@@ -416,9 +412,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: Spacing.layout.screenPadding,
     paddingVertical: Spacing.lg,
-    backgroundColor: SolanaColors.white,
+    backgroundColor: SolanaColors.background.primary,
     borderBottomWidth: 1,
-    borderBottomColor: SolanaColors.border.secondary,
+    borderBottomColor: SolanaColors.border.primary,
   },
 
   headerContent: {
@@ -457,6 +453,7 @@ const styles = StyleSheet.create({
   merchantCard: {
     marginBottom: Spacing.lg,
     padding: 0,
+    backgroundColor: SolanaColors.background.card,
   },
 
   merchantHeader: {
@@ -605,13 +602,14 @@ const styles = StyleSheet.create({
   exploreSection: {
     paddingHorizontal: Spacing.layout.screenPadding,
     paddingVertical: Spacing.lg,
-    backgroundColor: SolanaColors.white,
+    backgroundColor: SolanaColors.background.primary,
     borderBottomWidth: 1,
-    borderBottomColor: SolanaColors.border.secondary,
+    borderBottomColor: SolanaColors.border.primary,
+    marginTop: Spacing.xl,
   },
 
   exploreTitle: {
-    fontSize: Typography.fontSize.lg,
+    fontSize: Typography.fontSize["2xl"],
     fontWeight: Typography.fontWeight.bold,
     color: SolanaColors.text.primary,
     marginBottom: Spacing.md,
@@ -627,7 +625,7 @@ const styles = StyleSheet.create({
     width: "48%",
     height: 100,
     borderRadius: Spacing.borderRadius.lg,
-    shadowColor: "#000",
+    shadowColor: SolanaColors.shadow.medium,
     shadowOffset: {
       width: 0,
       height: 3,
@@ -661,14 +659,14 @@ const styles = StyleSheet.create({
     fontWeight: Typography.fontWeight.medium,
     color: SolanaColors.text.secondary,
     textAlign: "center",
-    marginTop: Spacing.md,
+    marginTop: Spacing.sm,
     paddingHorizontal: Spacing.md,
   },
 
   categoryTitle: {
     fontSize: Typography.fontSize.base,
     fontWeight: Typography.fontWeight.bold,
-    color: SolanaColors.white,
+    color: SolanaColors.text.primary,
     marginTop: Spacing.sm,
     textAlign: "center",
     textShadowColor: "rgba(0, 0, 0, 0.3)",
@@ -686,6 +684,13 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.lg,
     fontWeight: Typography.fontWeight.bold,
     color: SolanaColors.text.primary,
+    marginBottom: Spacing.md,
+  },
+
+  merchantsSubtitle: {
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.medium,
+    color: SolanaColors.text.secondary,
     marginBottom: Spacing.md,
   },
 

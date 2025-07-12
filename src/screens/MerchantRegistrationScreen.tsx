@@ -331,11 +331,12 @@ const styles = StyleSheet.create({
   },
   formCard: {
     margin: Spacing.layout.screenPadding,
+    backgroundColor: SolanaColors.background.card,
   },
   title: {
     fontSize: Typography.fontSize["2xl"],
     fontWeight: Typography.fontWeight.bold,
-    color: SolanaColors.text.onCard,
+    color: SolanaColors.text.primary,
     marginBottom: Spacing.sm,
     textAlign: "center",
   },
@@ -354,7 +355,7 @@ const styles = StyleSheet.create({
   locationLabel: {
     fontSize: Typography.fontSize.base,
     fontWeight: Typography.fontWeight.medium,
-    color: SolanaColors.text.onCard,
+    color: SolanaColors.text.primary,
     marginBottom: Spacing.sm,
   },
   locationStatus: {

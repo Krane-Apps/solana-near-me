@@ -5,7 +5,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import { SolanaColors } from "../theme";
+import { SolanaColors, createDarkGlassEffect } from "../theme";
 import { UI_CONSTANTS } from "../config/constants";
 import { locationService } from "../services/locationService";
 
@@ -13,7 +13,6 @@ import { locationService } from "../services/locationService";
 import WelcomeScreen from "../screens/WelcomeScreen";
 import MapScreen from "../screens/MapScreen";
 import MerchantListScreen from "../screens/MerchantListScreen";
-import SearchScreen from "../screens/SearchScreen";
 import OptionsScreen from "../screens/OptionsScreen";
 import PaymentScreen from "../screens/PaymentScreen";
 import PaymentSuccessScreen from "../screens/PaymentSuccessScreen";
@@ -26,7 +25,6 @@ export type RootStackParamList = {
   Main: undefined;
   Dashboard: undefined;
   Map: undefined;
-  Search: undefined;
   Options: undefined;
   Payment: {
     merchantId: string;
@@ -89,27 +87,30 @@ function MainTabNavigator() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: SolanaColors.background.primary,
-          borderTopColor: SolanaColors.border.secondary,
-          borderTopWidth: 1,
+          ...createDarkGlassEffect(0.5),
+          borderTopWidth: 0,
+          borderRadius: 20,
           height: UI_CONSTANTS.BOTTOM_TAB_HEIGHT + insets.bottom,
           paddingBottom: insets.bottom + 8,
           paddingTop: 8,
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
+          position: "absolute",
+          bottom: 16,
+          left: 16,
+          right: 16,
+          marginHorizontal: 0,
+          marginBottom: 0,
         },
-        tabBarActiveTintColor: SolanaColors.button.primary,
+        tabBarActiveTintColor: SolanaColors.primary,
         tabBarInactiveTintColor: SolanaColors.text.secondary,
         tabBarLabelStyle: {
           fontSize: 12,
-          fontWeight: "500",
+          fontWeight: "600",
           marginBottom: 4,
         },
         tabBarIconStyle: {
           marginTop: 4,
         },
+        tabBarBackground: () => null, // Remove default background
       }}
       initialRouteName={hasLocationPermission ? "Map" : "Dashboard"}
     >
@@ -163,7 +164,6 @@ export const AppNavigator: React.FC = () => {
       >
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
         <Stack.Screen name="Main" component={MainTabNavigator} />
-        <Stack.Screen name="Search" component={SearchScreen} />
         <Stack.Screen name="Payment" component={PaymentScreen} />
         <Stack.Screen name="PaymentSuccess" component={PaymentSuccessScreen} />
         <Stack.Screen name="Reward" component={RewardScreen} />

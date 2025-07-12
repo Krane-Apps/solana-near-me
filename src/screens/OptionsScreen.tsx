@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
   },
 
   headerTitle: {
-    fontSize: Typography.fontSize["3xl"],
+    fontSize: Typography.fontSize["2xl"],
     fontWeight: Typography.fontWeight.bold,
     color: SolanaColors.text.primary,
     marginBottom: Spacing.xs,
@@ -251,11 +251,13 @@ const styles = StyleSheet.create({
 
   sectionCard: {
     padding: 0,
+    backgroundColor: SolanaColors.background.card,
   },
 
   // App Info Card
   infoCard: {
     padding: Spacing.xl,
+    backgroundColor: SolanaColors.background.card,
   },
 
   appInfo: {
@@ -311,7 +313,7 @@ const styles = StyleSheet.create({
 
   optionItemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: SolanaColors.border.secondary,
+    borderBottomColor: SolanaColors.border.primary,
   },
 
   optionIcon: {

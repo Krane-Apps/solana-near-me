@@ -4,13 +4,15 @@ import {
   Text,
   StyleSheet,
   SafeAreaView,
-  Image,
   ScrollView,
+  TouchableOpacity,
+  Linking,
 } from "react-native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
-import { SolanaColors, Typography, Spacing } from "../theme";
+import { SolanaColors, Typography, Spacing, createShadow } from "../theme";
 import { Button } from "../components/ui";
+import Animated, { FadeInDown } from "react-native-reanimated";
 
 type WelcomeScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -34,60 +36,89 @@ const WelcomeScreen: React.FC<Props> = ({ navigation }) => {
       >
         {/* Hero Section */}
         <View style={styles.heroSection}>
-          <View style={styles.logoContainer}>
-            <Text style={styles.logoEmoji}>⚡</Text>
-          </View>
-
-          <Text style={styles.title}>Welcome to NearMe</Text>
-          <Text style={styles.subtitle}>
-            Discover merchants near you and pay with Solana
-          </Text>
+          <Animated.View entering={FadeInDown.duration(600)}>
+            <View style={styles.logoContainer}>
+              <Text style={styles.logoEmoji}>◎</Text>
+            </View>
+          </Animated.View>
+          <Animated.Text
+            entering={FadeInDown.duration(600).delay(200)}
+            style={styles.title}
+          >
+            Welcome to NearMe
+          </Animated.Text>
+          <Animated.Text
+            entering={FadeInDown.duration(600).delay(400)}
+            style={styles.subtitle}
+          >
+            Discover local merchants and pay seamlessly with Solana
+          </Animated.Text>
         </View>
 
         {/* Features Section */}
         <View style={styles.featuresSection}>
-          <View style={styles.feature}>
-            <View style={styles.featureIcon}>
-              <Text style={styles.featureEmoji}>🗺️</Text>
-            </View>
-            <Text style={styles.featureTitle}>Find Nearby Merchants</Text>
-            <Text style={styles.featureDescription}>
-              Discover crypto-friendly businesses in your area
-            </Text>
-          </View>
-
-          <View style={styles.feature}>
-            <View style={styles.featureIcon}>
-              <Text style={styles.featureEmoji}>💳</Text>
-            </View>
-            <Text style={styles.featureTitle}>Pay with Solana</Text>
-            <Text style={styles.featureDescription}>
-              Fast, secure payments with SOL and USDC
-            </Text>
-          </View>
-
-          <View style={styles.feature}>
-            <View style={styles.featureIcon}>
-              <Text style={styles.featureEmoji}>🎁</Text>
-            </View>
-            <Text style={styles.featureTitle}>Earn Rewards</Text>
-            <Text style={styles.featureDescription}>
-              Get SOL rewards for every transaction
-            </Text>
-          </View>
+          <Text style={styles.featuresTitle}>Why NearMe?</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.featuresScroll}
+          >
+            <Animated.View
+              entering={FadeInDown.duration(600).delay(600)}
+              style={styles.featureCard}
+            >
+              <View style={styles.featureIcon}>
+                <Text style={styles.featureEmoji}>🗺️</Text>
+              </View>
+              <Text style={styles.featureTitle}>Discover Nearby</Text>
+              <Text style={styles.featureDescription}>
+                Find crypto-friendly merchants around you
+              </Text>
+            </Animated.View>
+            <Animated.View
+              entering={FadeInDown.duration(600).delay(800)}
+              style={styles.featureCard}
+            >
+              <View style={styles.featureIcon}>
+                <Text style={styles.featureEmoji}>⚡</Text>
+              </View>
+              <Text style={styles.featureTitle}>Fast Payments</Text>
+              <Text style={styles.featureDescription}>
+                Pay with SOL or USDC in seconds
+              </Text>
+            </Animated.View>
+            <Animated.View
+              entering={FadeInDown.duration(600).delay(1000)}
+              style={styles.featureCard}
+            >
+              <View style={styles.featureIcon}>
+                <Text style={styles.featureEmoji}>🏆</Text>
+              </View>
+              <Text style={styles.featureTitle}>Earn Rewards</Text>
+              <Text style={styles.featureDescription}>
+                Get SOL cashback and NFT badges
+              </Text>
+            </Animated.View>
+          </ScrollView>
         </View>
 
         {/* CTA Section */}
-        <View style={styles.ctaSection}>
+        <Animated.View
+          entering={FadeInDown.duration(600).delay(1200)}
+          style={styles.ctaSection}
+        >
           <Button
-            title="Get Started"
+            title="Start Exploring"
             onPress={handleStartPress}
             size="large"
             fullWidth
           />
-
-          <Text style={styles.footerText}>Powered by Solana blockchain</Text>
-        </View>
+          <TouchableOpacity
+            onPress={() => Linking.openURL("https://solana.com")}
+          >
+            <Text style={styles.footerText}>Powered by Solana</Text>
+          </TouchableOpacity>
+        </Animated.View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -109,46 +140,37 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingTop: Spacing["6xl"],
     paddingBottom: Spacing["4xl"],
-  },
-
-  logoContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
     backgroundColor: SolanaColors.primary,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+  },
+  logoContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: SolanaColors.background.primary,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: Spacing["2xl"],
-    shadowColor: SolanaColors.primary,
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
+    ...createShadow(12),
   },
-
   logoEmoji: {
-    fontSize: 48,
-    color: SolanaColors.white,
+    fontSize: 64,
+    color: SolanaColors.primary,
   },
-
   title: {
-    fontSize: Typography.fontSize["3xl"],
+    fontSize: Typography.fontSize["4xl"],
     fontWeight: Typography.fontWeight.bold,
-    color: SolanaColors.text.primary,
+    color: SolanaColors.white,
     textAlign: "center",
     marginBottom: Spacing.md,
   },
-
   subtitle: {
     fontSize: Typography.fontSize.lg,
-    fontWeight: Typography.fontWeight.regular,
-    color: SolanaColors.text.secondary,
+    color: SolanaColors.white,
     textAlign: "center",
-    lineHeight: Typography.lineHeight.relaxed * Typography.fontSize.lg,
-    maxWidth: 280,
+    maxWidth: "80%",
+    opacity: 0.9,
   },
 
   // Features Section
@@ -156,19 +178,38 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing["2xl"],
   },
 
+  featuresTitle: {
+    fontSize: Typography.fontSize.xl,
+    fontWeight: Typography.fontWeight.semibold,
+    color: SolanaColors.text.primary,
+    marginBottom: Spacing.lg,
+  },
+  featuresScroll: {
+    marginHorizontal: -Spacing.layout.screenPadding,
+    paddingHorizontal: Spacing.layout.screenPadding,
+  },
+  featureCard: {
+    width: 160,
+    backgroundColor: SolanaColors.background.card,
+    borderRadius: Spacing.borderRadius.xl,
+    padding: Spacing.lg,
+    alignItems: "center",
+    marginRight: Spacing.lg,
+    ...createShadow(4),
+  },
   feature: {
     alignItems: "center",
     marginBottom: Spacing["3xl"],
   },
 
   featureIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: SolanaColors.background.secondary,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
 
   featureEmoji: {
@@ -176,20 +217,17 @@ const styles = StyleSheet.create({
   },
 
   featureTitle: {
-    fontSize: Typography.fontSize.xl,
+    fontSize: Typography.fontSize.base,
     fontWeight: Typography.fontWeight.semibold,
     color: SolanaColors.text.primary,
+    marginBottom: Spacing.xs,
     textAlign: "center",
-    marginBottom: Spacing.sm,
   },
 
   featureDescription: {
-    fontSize: Typography.fontSize.base,
-    fontWeight: Typography.fontWeight.regular,
+    fontSize: Typography.fontSize.sm,
     color: SolanaColors.text.secondary,
     textAlign: "center",
-    lineHeight: Typography.lineHeight.relaxed * Typography.fontSize.base,
-    maxWidth: 240,
   },
 
   // CTA Section
@@ -202,7 +240,7 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: Typography.fontSize.sm,
     fontWeight: Typography.fontWeight.regular,
-    color: SolanaColors.text.tertiary,
+    color: SolanaColors.text.secondary,
     textAlign: "center",
     marginTop: Spacing.lg,
   },

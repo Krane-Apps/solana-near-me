@@ -31,7 +31,7 @@ export const UI_CONSTANTS = {
   },
   
   // Bottom tab height
-  BOTTOM_TAB_HEIGHT: 80,
+  BOTTOM_TAB_HEIGHT: 60,
   
   // Map constants
   BANGALORE_REGION: {
