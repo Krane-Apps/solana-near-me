@@ -1,6 +1,6 @@
 import React from "react";
 import { View, StyleSheet, ViewStyle } from "react-native";
-import { SolanaColors, Spacing } from "../../theme";
+import { SolanaColors, Spacing } from "../../lib/theme";
 
 export interface CardProps {
   children: React.ReactNode;
@@ -44,7 +44,6 @@ const styles = StyleSheet.create({
     // Base card styles are applied dynamically
   },
 
-  // Card variants
   default: {
     // Default card with subtle shadow
   },
@@ -67,7 +66,6 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
 
-  // Shadow styles - Airbnb-inspired subtle shadows
   shadow: {
     shadowColor: SolanaColors.shadow.light,
     shadowOffset: {

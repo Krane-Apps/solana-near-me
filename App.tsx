@@ -1,21 +1,36 @@
+// CRITICAL: Import polyfills FIRST - before any other imports
+import "./polyfills";
+
 import React, { useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import FlashMessage from "react-native-flash-message";
 import { AppNavigator } from "./src/navigation/AppNavigator";
-import { locationService } from "./src/services/locationService";
+import { AppProviders } from "./src/providers/AppProviders";
+import { locationService } from "./src/lib/services/locationService";
+import { logger } from "./src/lib/utils/logger";
+
+const FILE_NAME = "App.tsx";
 
 export default function App() {
   useEffect(() => {
-    // Request location permission on app start
+    logger.info(FILE_NAME, "App starting up");
+
     const requestLocation = async () => {
       try {
+        logger.info(FILE_NAME, "Requesting location permission");
         const hasPermission = await locationService.requestLocationPermission();
+
         if (!hasPermission) {
-          // Show alert if permission not granted
+          logger.warn(
+            FILE_NAME,
+            "Location permission not granted, showing alert"
+          );
           await locationService.showLocationPermissionAlert();
+        } else {
+          logger.info(FILE_NAME, "Location permission granted");
         }
       } catch (error) {
-        console.warn("Location permission error:", error);
+        logger.error(FILE_NAME, "Location permission error", error);
       }
     };
 
@@ -23,11 +38,10 @@ export default function App() {
   }, []);
 
   return (
-    <>
+    <AppProviders>
       <StatusBar style="light" backgroundColor="#1a1a1a" />
       <AppNavigator />
-      {/* Global Flash Message Component - always as the last component */}
       <FlashMessage position="top" />
-    </>
+    </AppProviders>
   );
 }

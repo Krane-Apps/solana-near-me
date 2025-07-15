@@ -1,93 +1,148 @@
-Product Requirements Document: Solana NearMe MVP
-Introduction
-Solana NearMe is a mobile app built with the Solana Mobile Stack for the Solana Mobile hackathon. It enables users to locate nearby merchants accepting Solana payments (in USDC), make transactions with SOL-to-USDC conversion, and earn rewards. This PRD defines the MVP, focusing on a minimal, intuitive UI inspired by Google Pay, styled with Solana's brand colors (purple #9945FF, teal #00FFA3, white #FFFFFF), and covering all major features with mock implementations.
-Features
+# Product Requirements Document: Solana NearMe
 
-Mock Authentication
+## Overview
+**Solana NearMe** is a React Native mobile app that enables users to discover nearby merchants accepting Solana payments and complete transactions seamlessly using the Solana Mobile Stack.
 
-Users are assumed to be logged in with a connected Solana wallet for the MVP.
+**Target**: Solana Mobile Hackathon MVP with real-world scalability potential  
+**Timeline**: 4-week development cycle  
+**Platform**: Android (Solana Mobile focus)
 
+## Core Features
 
-Map View
+### 1. **Map-Based Merchant Discovery**
+- Interactive map displaying nearby crypto-accepting merchants
+- Real-time location services with merchant proximity
+- Filter by category (cafes, electronics, services, etc.)
+- Merchant details: name, address, accepted tokens, ratings
 
-Displays a map with 5-10 hardcoded merchants in Bangalore.
-Teal markers on a purple background for merchant locations.
+### 2. **Solana Pay Integration**
+- **Real Transactions**: SOL and USDC payments via Mobile Wallet Adapter
+- **Multi-Token Support**: Native SOL and SPL token (USDC) transfers
+- **QR Code Generation**: Standard Solana Pay QR codes for payments
+- **Transaction Validation**: On-chain verification and confirmation
 
+### 3. **Rewards System**
+- 1% cashback in SOL for all transactions
+- NFT achievement badges for milestones
+- Referral bonuses for user acquisition
+- Gamified payment experience
 
-Merchant Details
+### 4. **Merchant Onboarding**
+- Self-service registration form
+- Wallet address verification
+- Category selection and business details
+- Review and approval workflow
 
-Shows merchant name, address, and category in a card-based layout.
-Includes a teal "Pay" button.
+## Technical Architecture
 
+### **Frontend Stack**
+```
+React Native + Expo (Development Build)
+TypeScript for type safety
+React Navigation for screen management
+React Native Maps for location services
+```
 
-Payment
+### **Blockchain Integration**
+```
+@solana/web3.js - Core Solana interactions
+@solana/pay - Payment processing standards
+@solana-mobile/mobile-wallet-adapter - Native wallet integration
+@solana/spl-token - USDC token operations
+```
 
-Users input an amount in SOL or USDC.
-If SOL is selected, displays a mock conversion rate to USDC (e.g., "1 SOL = 10 USDC").
-Mocks transaction signing and confirmation.
+### **Backend & Data**
+```
+Firebase Firestore - Merchant data and transactions
+React Native Firebase - Real-time data sync
+AsyncStorage - Local wallet state persistence
+```
 
+### **Key Services**
+- **SolanaPayService**: Transaction creation and validation
+- **LocationService**: GPS and merchant proximity
+- **FirebaseService**: Data persistence and real-time updates
 
-Rewards
+## User Flows
 
-Post-payment, displays a mock reward (e.g., "You earned 0.01 test SOL!" or "You got a Solana badge!").
-Features a simple animation for reveal.
+### **Payment Flow**
+1. **Discovery**: Open app → View map with merchant markers
+2. **Selection**: Tap merchant → View details modal
+3. **Payment**: Select amount and token (SOL/USDC) → Confirm
+4. **Transaction**: Mobile Wallet Adapter signs → Blockchain confirmation
+5. **Completion**: Success screen with rewards and transaction link
 
+### **Merchant Registration**
+1. **Access**: Menu → "Register Business"
+2. **Form**: Business details + wallet address
+3. **Verification**: Submit for review
+4. **Approval**: Admin approval → Live on map
 
-Merchant Registration
+## UI/UX Design
 
-Offers a form for merchants to input name, address, category, and wallet address.
-Submission triggers a mock "under review" message.
+### **Design System**
+- **Primary**: Purple `#9945FF` (backgrounds, branding)
+- **Accent**: Teal `#00FFA3` (CTAs, success states)
+- **Text**: White `#FFFFFF` (dark theme optimized)
+- **Cards**: Glass morphism with subtle shadows
 
+### **Key Screens**
+- **Welcome**: Logo + onboarding flow
+- **Map**: Interactive merchant discovery
+- **Payment**: Amount input + token selection
+- **Success**: Transaction confirmation + rewards
+- **Profile**: Wallet info + transaction history
 
+## Success Metrics
 
-User Flows
-Making a Payment
+### **Technical**
+- ✅ Real Solana transactions (SOL + USDC)
+- ✅ Sub-3 second payment confirmation
+- ✅ 99%+ transaction success rate
+- ✅ Seamless wallet integration
 
-Step 1: User opens app, sees welcome screen with Solana logo and "Start" button (teal).
-Step 2: Clicks "Start," taken to map view with teal merchant markers.
-Step 3: Taps a marker; merchant details card slides up with name, address, category, and "Pay" button.
-Step 4: Clicks "Pay," enters amount on payment screen, toggles SOL/USDC (mock conversion shown if SOL).
-Step 5: Clicks "Confirm" (teal button), prompted to mock-sign transaction via wallet.
-Step 6: Sees "Payment Successful" confirmation with details.
-Step 7: Reward screen appears with animated mock reward.
+### **Business**
+- 🎯 1,000+ beta user registrations
+- 🎯 10+ verified merchants onboarded
+- 🎯 100+ successful transactions
+- 🎯 4.5+ app store rating
 
-Merchant Registration
+## Security & Compliance
 
-Step 1: User opens menu (hamburger icon on map screen), selects "Register Business."
-Step 2: Fills form with business name, address, category, and wallet address.
-Step 3: Clicks "Submit" (teal button).
-Step 4: Sees mock "Thank you! Your business is under review" message, returns to map.
+### **Wallet Security**
+- No private key storage in app
+- Mobile Wallet Adapter for secure signing
+- Transaction references for tracking
+- Network validation for all payments
 
-Technical Requirements
+### **Data Privacy**
+- Minimal user data collection
+- Firebase security rules
+- No KYC required for MVP
+- GDPR-compliant data handling
 
-Framework: React Native for cross-platform mobile development.
-Map: react-native-maps for merchant location display.
-Blockchain: @solana/web3.js for Solana interactions (mocked for MVP).
-Wallet: @solana-mobile/mobile-wallet-adapter-protocol for wallet connectivity.
-Mock Data: Hardcoded merchants (e.g., "Crypto Cafe" at lat/long) and rewards.
-UI Components: Custom-built with Solana’s color palette.
+## Future Roadmap
 
-UI/UX Guidelines
+### **Phase 2** (Post-Hackathon)
+- iOS support with Saga integration
+- Mainnet deployment with real rewards
+- Advanced merchant analytics
+- Push notifications for nearby deals
 
-Color Scheme:
-Primary: Purple #9945FF (backgrounds, borders).
-Accent: Teal #00FFA3 (buttons, markers).
-Text: White #FFFFFF (readable on dark theme).
+### **Phase 3** (Scaling)
+- Multi-city expansion
+- Merchant dashboard web app
+- Loyalty program integrations
+- Enterprise merchant solutions
 
+## Technical Requirements Summary
 
-Design Inspiration: Google Pay’s minimal, card-based UI with a dark theme, adapted for Solana branding.
-Key Screens:
-Welcome: Logo, "Start" button.
-Map: Purple map, teal markers, search bar.
-Merchant Details: White card, purple border, teal "Pay" button.
-Payment: Input fields with purple borders, teal "Confirm" button.
-Reward: Animated card on purple background.
-Registration: Form with purple accents, teal "Submit" button.
-
-
-
-Success Criteria
-
-Functional prototype with mock merchant data and transactions.
-Seamless payment and reward flow demonstrated in demo.
-Positive feedback on usability and innovation from hackathon judges.
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| Mobile Framework | React Native + Expo | Cross-platform development |
+| Blockchain | Solana Web3.js + Solana Pay | Payment processing |
+| Wallet Integration | Mobile Wallet Adapter | Secure transaction signing |
+| Maps | React Native Maps | Location-based discovery |
+| Backend | Firebase Firestore | Data persistence |
+| State Management | React Context + Hooks | App state |
+| UI Components | Custom + React Native Elements | Consistent design |

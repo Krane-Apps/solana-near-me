@@ -8,7 +8,7 @@ import {
   TextStyle,
   TextInputProps as RNTextInputProps,
 } from "react-native";
-import { SolanaColors, Typography, Spacing } from "../../theme";
+import { SolanaColors, Typography, Spacing } from "../../lib/theme";
 
 export interface TextInputProps extends RNTextInputProps {
   label?: string;
@@ -84,7 +84,6 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
 
-  // Input variants
   default: {
     // Default styling applied above
   },

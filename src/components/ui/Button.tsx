@@ -7,7 +7,7 @@ import {
   ViewStyle,
   TextStyle,
 } from "react-native";
-import { SolanaColors, Typography, Spacing } from "../../theme";
+import { SolanaColors, Typography, Spacing } from "../../lib/theme";
 
 export interface ButtonProps {
   title: string;
@@ -92,7 +92,6 @@ const styles = StyleSheet.create({
     width: "100%",
   },
 
-  // Variants - Airbnb-inspired button styles
   primary: {
     backgroundColor: SolanaColors.primary,
     borderWidth: 0,
@@ -119,7 +118,6 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
 
-  // Sizes
   small: {
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
@@ -138,7 +136,6 @@ const styles = StyleSheet.create({
     minHeight: 56,
   },
 
-  // Disabled state
   disabled: {
     backgroundColor: SolanaColors.button.disabled,
     borderColor: SolanaColors.button.disabled,
@@ -146,7 +143,6 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
 
-  // Text styles
   text: {
     fontWeight: Typography.fontWeight.semibold,
     textAlign: "center",

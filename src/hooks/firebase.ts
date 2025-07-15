@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { UserService, TransactionService } from '../firebase/services';
-import type { User, Transaction } from '../firebase/services';
+import { UserService, TransactionService } from '../lib/firebase/services';
+import type { User, Transaction } from '../lib/firebase/services';
 
 // Hook for fetching user data
 export const useUser = (walletAddress: string | null) => {

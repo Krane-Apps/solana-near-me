@@ -1,16 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { useConnection } from './useConnection';
-import { EXCHANGE_RATES } from '../config/constants';
+import { EXCHANGE_RATES } from '../lib/utils/constants';
+import { SolanaPayService } from '../lib/services/solanaPayService';
+import { WalletBalance } from '../lib/types';
+import { logger } from '../lib/utils/logger';
 
-export interface WalletBalance {
-  sol: number;
-  solUSD: number;
-  usdc: number;
-  usdcUSD: number;
-  loading: boolean;
-  error: string | null;
-}
+const FILE_NAME = 'useWalletBalance.ts';
 
 export function useWalletBalance(publicKey: PublicKey | null) {
   const { connection } = useConnection();
@@ -25,6 +21,7 @@ export function useWalletBalance(publicKey: PublicKey | null) {
 
   const fetchBalances = useCallback(async () => {
     if (!publicKey) {
+      logger.debug(FILE_NAME, 'No public key provided, resetting balances');
       setBalance({
         sol: 0,
         solUSD: 0,
@@ -37,18 +34,28 @@ export function useWalletBalance(publicKey: PublicKey | null) {
     }
 
     try {
+      logger.info(FILE_NAME, 'Fetching wallet balances', {
+        publicKey: publicKey.toString()
+      });
+      
       setBalance(prev => ({ ...prev, loading: true, error: null }));
 
-      // Fetch SOL balance
-      const solLamports = await connection.getBalance(publicKey);
-      const solBalance = solLamports / LAMPORTS_PER_SOL;
-      const solUSD = solBalance * EXCHANGE_RATES.SOL_TO_USD;
+      const solanaPayService = new SolanaPayService(connection);
 
-      // For USDC, we would need to fetch SPL token balance
-      // For now, we'll use a mock value or 0
-      // TODO: Implement SPL token balance fetching
-      const usdcBalance = 0; // Placeholder
+      const [solBalance, usdcBalance] = await Promise.all([
+        solanaPayService.getSOLBalance(publicKey),
+        solanaPayService.getUSDCBalance(publicKey)
+      ]);
+
+      const solUSD = solBalance * EXCHANGE_RATES.SOL_TO_USD;
       const usdcUSD = usdcBalance * EXCHANGE_RATES.USDC_TO_USD;
+
+      logger.info(FILE_NAME, 'Balances fetched successfully', {
+        sol: solBalance,
+        usdc: usdcBalance,
+        solUSD,
+        usdcUSD
+      });
 
       setBalance({
         sol: solBalance,
@@ -59,7 +66,7 @@ export function useWalletBalance(publicKey: PublicKey | null) {
         error: null,
       });
     } catch (error) {
-      console.error('Failed to fetch wallet balance:', error);
+      logger.error(FILE_NAME, 'Failed to fetch wallet balance', error);
       setBalance(prev => ({
         ...prev,
         loading: false,

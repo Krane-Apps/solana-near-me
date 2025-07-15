@@ -150,9 +150,6 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
-    
-    // Google Play Services for location
-    implementation 'com.google.android.gms:play-services-location:21.3.0'
 
     def isGifEnabled = (findProperty('expo.gif.enabled') ?: "") == "true";
     def isWebpEnabled = (findProperty('expo.webp.enabled') ?: "") == "true";
@@ -178,6 +175,3 @@ dependencies {
         implementation jscFlavor
     }
 }
-
-// Apply Google Services plugin
-apply plugin: 'com.google.gms.google-services'

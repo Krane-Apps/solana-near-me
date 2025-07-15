@@ -20,9 +20,11 @@ A React Native mobile application that enables crypto payments at local merchant
 - **React Native** with Expo (Development Build)
 - **TypeScript** for type safety
 - **Solana Web3.js** for blockchain interactions
+- **Solana Pay** for standardized payment processing
 - **Mobile Wallet Adapter** for native wallet integration
 - **React Native Maps** for merchant discovery
 - **React Navigation** for screen management
+- **Firebase** for merchant and transaction data
 
 ## 📱 Prerequisites
 
@@ -40,6 +42,11 @@ A React Native mobile application that enables crypto payments at local merchant
 git clone https://github.com/bluntbrain/solana-near-me.git
 cd solana-near-me
 npm install
+```
+
+**Note:** After cloning, make sure to install the latest dependencies including Solana Pay:
+```bash
+npm install @solana/pay @solana/spl-token bignumber.js react-native-qrcode-svg react-native-svg
 ```
 
 ### 2. Google Maps API Key Setup
@@ -85,6 +92,39 @@ src/
 │   ├── RewardScreen.tsx
 │   └── MerchantRegistrationScreen.tsx
 └── theme/                  # Design system
+```
+
+## ⚡ Solana Pay Integration
+
+### What's New
+- **Real Solana Transactions**: No more mock payments - real SOL and USDC transfers
+- **USDC Support**: Full SPL token integration with automatic account creation
+- **QR Code Generation**: Create Solana Pay QR codes for merchant payments
+- **Transaction Validation**: Verify payments using Solana Pay standards
+- **Enhanced Error Handling**: Better UX with detailed transaction feedback
+
+### Key Features
+- **Standards Compliant**: Uses official `@solana/pay` package
+- **Mobile-First**: Optimized for React Native with Mobile Wallet Adapter
+- **Multi-Token**: Supports both SOL and USDC payments seamlessly
+- **Reference Tracking**: Each transaction includes unique reference for tracking
+- **Real-time Balances**: Fetch live SOL and USDC balances from the blockchain
+
+### Usage
+
+```typescript
+// Create a payment request
+const paymentRequest: PaymentRequest = {
+  recipient: new PublicKey(merchantWalletAddress),
+  amount: 0.1, // 0.1 SOL or USDC
+  token: 'SOL', // or 'USDC'
+  label: 'Coffee Shop Payment',
+  message: 'Thanks for your purchase!'
+};
+
+// Generate QR code for the payment
+const { createPaymentURL } = useSolanaPay();
+const qrCodeURL = await createPaymentURL(paymentRequest);
 ```
 
 ## 🎯 Core Screens
@@ -182,6 +222,12 @@ MIT License - see LICENSE file for details
 - Clean node_modules: `rm -rf node_modules && npm install`
 - Clean Expo cache: `npx expo start --clear`
 - Rebuild native: `npx expo prebuild --clean`
+
+**Solana Pay issues:**
+- Ensure all new dependencies are installed: `npm install @solana/pay @solana/spl-token`
+- For USDC transactions failing: Check if the recipient has a USDC token account
+- Transaction timeouts: Try increasing the confirmation timeout in the service
+- QR codes not generating: Verify the payment request format and network connectivity
 
 ## 📞 Support
 

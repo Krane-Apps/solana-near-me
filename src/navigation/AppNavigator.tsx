@@ -5,45 +5,22 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import { SolanaColors, createDarkGlassEffect } from "../theme";
-import { UI_CONSTANTS } from "../config/constants";
-import { locationService } from "../services/locationService";
+import { SolanaColors, createDarkGlassEffect } from "../lib/theme";
+import { UI_CONSTANTS } from "../lib/utils/constants";
+import { locationService } from "../lib/services/locationService";
+import { RootStackParamList } from "../lib/types";
+import { logger } from "../lib/utils/logger";
 
-// Import screens
-import WelcomeScreen from "../screens/WelcomeScreen";
-import MapScreen from "../screens/MapScreen";
-import MerchantListScreen from "../screens/MerchantListScreen";
-import OptionsScreen from "../screens/OptionsScreen";
-import PaymentScreen from "../screens/PaymentScreen";
-import PaymentSuccessScreen from "../screens/PaymentSuccessScreen";
-import RewardScreen from "../screens/RewardScreen";
-import MerchantRegistrationScreen from "../screens/MerchantRegistrationScreen";
-import { UserProfileScreen } from "../screens/UserProfileScreen";
+// Import screens from their new locations using index files
+import WelcomeScreen from "../screens/welcome";
+import { MapScreen, MerchantListScreen } from "../screens/map";
+import { PaymentScreen, PaymentSuccessScreen } from "../screens/payment";
+import MerchantRegistrationScreen from "../screens/merchant";
+import { UserProfileScreen } from "../screens/profile";
+import RewardScreen from "../screens/rewards";
+import OptionsScreen from "../screens/options";
 
-export type RootStackParamList = {
-  Welcome: undefined;
-  Main: undefined;
-  Dashboard: undefined;
-  Map: undefined;
-  Options: undefined;
-  Payment: {
-    merchantId: string;
-    merchantName: string;
-  };
-  PaymentSuccess: {
-    merchantId: string;
-    merchantName: string;
-    usdAmount: number;
-    tokenAmount: number;
-    token: "SOL" | "USDC";
-    transactionId: string;
-    timestamp: string;
-    rewardAmount?: number;
-  };
-  Reward: undefined;
-  MerchantRegistration: undefined;
-  UserProfile: undefined;
-};
+const FILE_NAME = "AppNavigator.tsx";
 
 // Create Tab navigator
 const Tab = createBottomTabNavigator<RootStackParamList>();
@@ -59,15 +36,17 @@ function MainTabNavigator() {
 
   React.useEffect(() => {
     const checkLocationPermission = async () => {
+      logger.info(FILE_NAME, "Checking location permission");
       const hasPermission = locationService.getHasPermission();
+      logger.debug(FILE_NAME, "Location permission status", { hasPermission });
       setHasLocationPermission(hasPermission);
     };
 
     checkLocationPermission();
   }, []);
 
-  // Show loading while checking permission
   if (hasLocationPermission === null) {
+    logger.debug(FILE_NAME, "Showing loading state while checking permissions");
     return (
       <View
         style={{
@@ -110,7 +89,7 @@ function MainTabNavigator() {
         tabBarIconStyle: {
           marginTop: 4,
         },
-        tabBarBackground: () => null, // Remove default background
+        tabBarBackground: () => null,
       }}
       initialRouteName={hasLocationPermission ? "Map" : "Dashboard"}
     >
@@ -151,6 +130,8 @@ function MainTabNavigator() {
 }
 
 export const AppNavigator: React.FC = () => {
+  logger.info(FILE_NAME, "AppNavigator initialized");
+
   return (
     <NavigationContainer>
       <Stack.Navigator
