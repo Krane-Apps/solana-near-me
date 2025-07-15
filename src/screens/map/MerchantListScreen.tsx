@@ -7,9 +7,6 @@ import {
   TouchableOpacity,
   FlatList,
   RefreshControl,
-  ToastAndroid,
-  Platform,
-  Alert,
   ScrollView,
   TextInput,
 } from "react-native";
@@ -31,14 +28,6 @@ type MerchantListScreenNavigationProp = StackNavigationProp<
 
 interface Props {
   navigation: MerchantListScreenNavigationProp;
-}
-
-interface ExploreCategory {
-  id: string;
-  title: string;
-  icon: string;
-  color: string;
-  onPress: () => void;
 }
 
 const MerchantListScreen: React.FC<Props> = ({ navigation }) => {
@@ -115,14 +104,6 @@ const MerchantListScreen: React.FC<Props> = ({ navigation }) => {
     });
   };
 
-  const handleCategoryPress = (category: string) => {
-    if (Platform.OS === "android") {
-      ToastAndroid.show(`${category} - Coming Soon!`, ToastAndroid.SHORT);
-    } else {
-      Alert.alert(category, "Coming Soon!");
-    }
-  };
-
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
@@ -148,32 +129,6 @@ const MerchantListScreen: React.FC<Props> = ({ navigation }) => {
     }
     return `${distance.toFixed(1)}km`;
   };
-
-  const handleMobileRecharge = () => {
-    if (Platform.OS === "android") {
-      ToastAndroid.show("Mobile Recharge - Coming Soon!", ToastAndroid.SHORT);
-    } else {
-      Alert.alert("Mobile Recharge", "Coming Soon!");
-    }
-  };
-
-  // Explore categories
-  const exploreCategories: ExploreCategory[] = [
-    {
-      id: "mobile-recharge",
-      title: "Mobile Recharge",
-      icon: "phone-android",
-      color: SolanaColors.primary,
-      onPress: handleMobileRecharge,
-    },
-    {
-      id: "gift-cards",
-      title: "Gift Cards",
-      icon: "card-giftcard",
-      color: SolanaColors.secondary,
-      onPress: () => handleCategoryPress("Gift Cards"),
-    },
-  ];
 
   const renderMerchantItem = ({ item: merchant }: { item: Merchant }) => (
     <Card style={styles.merchantCard} shadow={true}>
@@ -250,35 +205,6 @@ const MerchantListScreen: React.FC<Props> = ({ navigation }) => {
         }
       >
         {/* Header */}
-
-        {/* Explore Section */}
-        <View style={styles.exploreSection}>
-          <Text style={styles.exploreTitle}>Explore</Text>
-          <View style={styles.exploreGrid}>
-            {exploreCategories.map((category) => (
-              <TouchableOpacity
-                key={category.id}
-                style={[
-                  styles.categoryCard,
-                  { backgroundColor: category.color },
-                ]}
-                onPress={category.onPress}
-                activeOpacity={0.8}
-              >
-                <View style={styles.cardGradientOverlay} />
-                <View style={styles.cardContent}>
-                  <Icon
-                    name={category.icon}
-                    size={28}
-                    color={SolanaColors.white}
-                  />
-                  <Text style={styles.categoryTitle}>{category.title}</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-          <Text style={styles.buyWithText}>Buy with SOL or USDC</Text>
-        </View>
 
         {/* Merchants Section */}
         <View
@@ -371,39 +297,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: SolanaColors.background.primary,
-  },
-
-  rechargeContainer: {
-    paddingHorizontal: Spacing.layout.screenPadding,
-    paddingVertical: Spacing.md,
-    backgroundColor: SolanaColors.primary,
-    alignItems: "center",
-    borderBottomWidth: 1,
-    borderBottomColor: SolanaColors.border.secondary,
-  },
-
-  rechargeButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: SolanaColors.white,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.lg,
-    borderRadius: Spacing.borderRadius.md,
-    shadowColor: SolanaColors.shadow.light,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-
-  rechargeButtonText: {
-    fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.semibold,
-    color: SolanaColors.background.primary,
-    marginLeft: Spacing.xs,
   },
 
   // Clean header design
@@ -597,82 +490,6 @@ const styles = StyleSheet.create({
 
   refreshButton: {
     paddingHorizontal: Spacing["2xl"],
-  },
-
-  // Explore section styles
-  exploreSection: {
-    paddingHorizontal: Spacing.layout.screenPadding,
-    paddingVertical: Spacing.lg,
-    backgroundColor: SolanaColors.background.primary,
-    borderBottomWidth: 1,
-    borderBottomColor: SolanaColors.border.primary,
-    marginTop: Spacing.xl,
-  },
-
-  exploreTitle: {
-    fontSize: Typography.fontSize["2xl"],
-    fontWeight: Typography.fontWeight.bold,
-    color: SolanaColors.text.primary,
-    marginBottom: Spacing.md,
-  },
-
-  exploreGrid: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: Spacing.lg,
-  },
-
-  categoryCard: {
-    width: "48%",
-    height: 100,
-    borderRadius: Spacing.borderRadius.lg,
-    shadowColor: SolanaColors.shadow.medium,
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    elevation: 4,
-    position: "relative",
-    overflow: "hidden",
-  },
-
-  cardGradientOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.1)",
-    borderRadius: Spacing.borderRadius.lg,
-  },
-
-  cardContent: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 1,
-  },
-
-  buyWithText: {
-    fontSize: Typography.fontSize.base,
-    fontWeight: Typography.fontWeight.medium,
-    color: SolanaColors.text.secondary,
-    textAlign: "center",
-    marginTop: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-  },
-
-  categoryTitle: {
-    fontSize: Typography.fontSize.base,
-    fontWeight: Typography.fontWeight.bold,
-    color: SolanaColors.text.primary,
-    marginTop: Spacing.sm,
-    textAlign: "center",
-    textShadowColor: "rgba(0, 0, 0, 0.3)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
 
   // Merchants section styles
