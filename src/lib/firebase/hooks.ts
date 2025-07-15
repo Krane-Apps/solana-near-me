@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { 
   MerchantService, 
   TransactionService, 
@@ -8,9 +9,11 @@ import {
   Transaction,
   User,
   Reward,
-  Achievement
+  Achievement,
+  MerchantWithDistance
 } from './services';
-import { Merchant } from '../data/merchants';
+import { Merchant, MerchantQueryOptions, LocationCoords, CachedMerchantData } from '../types';
+import { logger } from '../utils/logger';
 
 // Add a small delay to ensure Firebase is initialized
 const FIREBASE_INIT_DELAY = 100;
@@ -58,6 +61,155 @@ export const useMerchants = () => {
   };
 
   return { merchants, loading, error, refetch };
+};
+
+// OPTIMIZED: Hook for location-based merchant queries (main optimization)
+export const useMerchantsNearLocation = (options: MerchantQueryOptions) => {
+  const FILE_NAME = 'useMerchantsNearLocation';
+  const [merchants, setMerchants] = useState<MerchantWithDistance[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [lastLocation, setLastLocation] = useState<LocationCoords | null>(null);
+
+  // Cache key for AsyncStorage
+  const getCacheKey = useCallback(() => {
+    if (!options.location) return null;
+    return `merchants_cache_${options.location.latitude}_${options.location.longitude}_${options.radius || 10000}`;
+  }, [options.location, options.radius]);
+
+  // Load cached data
+  const loadCachedMerchants = useCallback(async (): Promise<CachedMerchantData | null> => {
+    try {
+      const cacheKey = getCacheKey();
+      if (!cacheKey) return null;
+
+      const cached = await AsyncStorage.getItem(cacheKey);
+      if (!cached) return null;
+
+      const cachedData: CachedMerchantData = JSON.parse(cached);
+      
+      // Check if cache is still valid (24 hours)
+      const cacheAge = Date.now() - new Date(cachedData.lastUpdated).getTime();
+      const maxCacheAge = 24 * 60 * 60 * 1000; // 24 hours
+
+      if (cacheAge > maxCacheAge) {
+        logger.info(FILE_NAME, 'Cache expired, will fetch fresh data');
+        await AsyncStorage.removeItem(cacheKey);
+        return null;
+      }
+
+      logger.info(FILE_NAME, 'Loaded merchants from cache', {
+        count: cachedData.merchants.length,
+        cacheAgeHours: Math.round(cacheAge / (60 * 60 * 1000))
+      });
+
+      return cachedData;
+    } catch (err) {
+      logger.warn(FILE_NAME, 'Error loading cached merchants', err);
+      return null;
+    }
+  }, [getCacheKey]);
+
+  // Save to cache
+  const saveMerchantsToCache = useCallback(async (merchantsData: MerchantWithDistance[]) => {
+    try {
+      const cacheKey = getCacheKey();
+      if (!cacheKey || !options.location) return;
+
+      const cachedData: CachedMerchantData = {
+        merchants: merchantsData,
+        lastUpdated: new Date().toISOString(),
+        location: options.location,
+        radius: options.radius || 10000
+      };
+
+      await AsyncStorage.setItem(cacheKey, JSON.stringify(cachedData));
+      logger.info(FILE_NAME, 'Saved merchants to cache', { count: merchantsData.length });
+    } catch (err) {
+      logger.warn(FILE_NAME, 'Error saving merchants to cache', err);
+    }
+  }, [getCacheKey, options.location, options.radius]);
+
+  // Fetch merchants with caching and optimization
+  const fetchMerchants = useCallback(async (forceRefresh = false) => {
+    if (!options.location) {
+      logger.warn(FILE_NAME, 'No location provided, skipping fetch');
+      setMerchants([]);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Try to load from cache first (unless force refresh)
+      if (!forceRefresh) {
+        const cached = await loadCachedMerchants();
+        if (cached) {
+          setMerchants(cached.merchants);
+          setLastLocation(cached.location);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Small delay to ensure Firebase is ready
+      await new Promise(resolve => setTimeout(resolve, FIREBASE_INIT_DELAY));
+
+      logger.info(FILE_NAME, 'Fetching merchants from Firebase', options);
+
+      // Fetch from Firebase using optimized geographic query
+      const data = await MerchantService.getMerchantsNearLocation(options);
+      
+      setMerchants(data);
+      setLastLocation(options.location);
+      
+      // Save to cache for future use
+      await saveMerchantsToCache(data);
+
+      logger.info(FILE_NAME, 'Successfully fetched merchants', {
+        count: data.length,
+        location: options.location,
+        radius: options.radius
+      });
+    } catch (err) {
+      logger.error(FILE_NAME, 'Error fetching merchants', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch merchants');
+    } finally {
+      setLoading(false);
+    }
+  }, [options, loadCachedMerchants, saveMerchantsToCache]);
+
+  // Auto-fetch when location changes significantly
+  useEffect(() => {
+    if (!options.location) return;
+
+    // Check if location changed significantly (>1km)
+    if (lastLocation) {
+      const distance = Math.sqrt(
+        Math.pow((options.location.latitude - lastLocation.latitude) * 111000, 2) +
+        Math.pow((options.location.longitude - lastLocation.longitude) * 111000, 2)
+      );
+      
+      if (distance < 1000) { // Less than 1km change
+        logger.debug(FILE_NAME, 'Location change too small, skipping fetch', { distance });
+        return;
+      }
+    }
+
+    fetchMerchants();
+  }, [options.location?.latitude, options.location?.longitude, fetchMerchants]);
+
+  const refetch = useCallback(() => fetchMerchants(true), [fetchMerchants]);
+
+  return { 
+    merchants, 
+    loading, 
+    error, 
+    refetch,
+    lastLocation 
+  };
 };
 
 // Hook for user data

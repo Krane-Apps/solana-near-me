@@ -7,12 +7,21 @@ import firestore, {
   updateDoc, 
   query, 
   where, 
-  orderBy
+  orderBy,
+  limit,
+  startAfter,
+  GeoPoint
 } from '@react-native-firebase/firestore';
 import { db, COLLECTIONS } from './config';
-import { Merchant } from '../data/merchants';
+import { Merchant, MerchantQueryOptions, LocationCoords } from '../types';
+import { encodeGeohash, getGeohashRange, calculateDistance } from '../utils/geohash';
+import { logger } from '../utils/logger';
 
-// Types
+// Types - extend merchant with distance for geographic queries
+export interface MerchantWithDistance extends Merchant {
+  distance?: number; // in kilometers
+}
+
 export interface Transaction {
   id: string;
   merchantId: string;
@@ -122,6 +131,144 @@ export const MerchantService = {
       console.error('Error updating merchant:', error);
       throw error;
     }
+  },
+
+  // OPTIMIZED: Get merchants near location (main optimization)
+  async getMerchantsNearLocation(options: MerchantQueryOptions): Promise<MerchantWithDistance[]> {
+    const FILE_NAME = 'MerchantService.getMerchantsNearLocation';
+    
+    try {
+      if (!options.location) {
+        logger.warn(FILE_NAME, 'No location provided, falling back to getAllMerchants');
+        return this.getAllMerchants();
+      }
+
+      const { location, radius = 10000, category, city, limit: queryLimit = 50 } = options;
+      
+      logger.info(FILE_NAME, 'Fetching merchants near location', {
+        location,
+        radius,
+        category,
+        city,
+        queryLimit
+      });
+
+      const merchantsCollection = collection(db, COLLECTIONS.MERCHANTS);
+      
+      // Use geohash for efficient querying
+      const { lower, upper } = getGeohashRange(location.latitude, location.longitude, radius);
+      
+      let q = query(
+        merchantsCollection,
+        where('geohash', '>=', lower),
+        where('geohash', '<=', upper),
+        where('isActive', '==', true),
+        limit(queryLimit * 2) // Get more than needed to account for filtering
+      );
+
+      // Add category filter if specified
+      if (category) {
+        q = query(
+          merchantsCollection,
+          where('geohash', '>=', lower),
+          where('geohash', '<=', upper),
+          where('isActive', '==', true),
+          where('category', '==', category),
+          limit(queryLimit * 2)
+        );
+      }
+
+      const snapshot = await getDocs(q);
+      let merchants = snapshot.docs.map((docSnap: any) => ({ 
+        id: docSnap.id, 
+        ...docSnap.data() 
+      } as Merchant));
+
+      // Filter by exact distance and add distance field
+      const merchantsWithDistance: MerchantWithDistance[] = merchants
+        .map((merchant: Merchant) => ({
+          ...merchant,
+          distance: calculateDistance(
+            location.latitude,
+            location.longitude,
+            merchant.latitude,
+            merchant.longitude
+          )
+        }))
+        .filter((merchant: MerchantWithDistance) => (merchant.distance || 0) <= radius / 1000) // Convert meters to km
+        .sort((a: MerchantWithDistance, b: MerchantWithDistance) => (a.distance || 0) - (b.distance || 0))
+        .slice(0, queryLimit);
+
+      logger.info(FILE_NAME, 'Successfully fetched nearby merchants', {
+        totalFound: merchantsWithDistance.length,
+        radiusKm: radius / 1000
+      });
+
+      return merchantsWithDistance;
+    } catch (error) {
+      logger.error(FILE_NAME, 'Error fetching nearby merchants', error);
+      throw error;
+    }
+  },
+
+  // OPTIMIZED: Get merchants by city (for when location permission denied)
+  async getMerchantsByCity(cityName: string, categoryFilter?: string, limitCount = 50): Promise<Merchant[]> {
+    const FILE_NAME = 'MerchantService.getMerchantsByCity';
+    
+    try {
+      logger.info(FILE_NAME, 'Fetching merchants by city', { cityName, categoryFilter, limitCount });
+
+      const merchantsCollection = collection(db, COLLECTIONS.MERCHANTS);
+      
+      let q = query(
+        merchantsCollection,
+        where('city', '==', cityName),
+        where('isActive', '==', true),
+        limit(limitCount)
+      );
+
+      if (categoryFilter) {
+        q = query(
+          merchantsCollection,
+          where('city', '==', cityName),
+          where('isActive', '==', true),
+          where('category', '==', categoryFilter),
+          limit(limitCount)
+        );
+      }
+
+      const snapshot = await getDocs(q);
+      const merchants = snapshot.docs.map((docSnap: any) => ({ 
+        id: docSnap.id, 
+        ...docSnap.data() 
+      } as Merchant));
+
+      logger.info(FILE_NAME, 'Successfully fetched merchants by city', {
+        totalFound: merchants.length,
+        city: cityName
+      });
+
+      return merchants;
+    } catch (error) {
+      logger.error(FILE_NAME, 'Error fetching merchants by city', error);
+      throw error;
+    }
+  },
+
+  // UTILITY: Prepare merchant data with geographic fields before saving
+  prepareMerchantForSave(merchant: Omit<Merchant, 'id' | 'geopoint' | 'geohash'>): Omit<Merchant, 'id'> {
+    const geopoint = new GeoPoint(merchant.latitude, merchant.longitude);
+    const geohash = encodeGeohash(merchant.latitude, merchant.longitude);
+    
+    return {
+      ...merchant,
+      geopoint,
+      geohash,
+      // Default city if not provided
+      city: merchant.city || 'Unknown',
+      createdAt: merchant.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
   },
 };
 

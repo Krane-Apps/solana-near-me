@@ -8,6 +8,13 @@ export interface Merchant {
   category: string;
   latitude: number;
   longitude: number;
+  // Geographic optimization fields
+  geopoint: {
+    latitude: number;
+    longitude: number;
+  };
+  geohash: string; // For efficient geographic queries
+  city: string; // For city-based filtering
   walletAddress: string;
   acceptedTokens: string[];
   rating?: number;
@@ -128,4 +135,32 @@ export type RootStackParamList = {
   Reward: undefined;
   MerchantRegistration: undefined;
   UserProfile: undefined;
-}; 
+};
+
+// Geographic Query Types
+export interface LocationCoords {
+  latitude: number;
+  longitude: number;
+}
+
+export interface GeographicBounds {
+  northeast: LocationCoords;
+  southwest: LocationCoords;
+}
+
+export interface MerchantQueryOptions {
+  location?: LocationCoords;
+  radius?: number; // in meters
+  bounds?: GeographicBounds;
+  category?: string;
+  city?: string;
+  limit?: number;
+  lastDocument?: any; // For pagination
+}
+
+export interface CachedMerchantData {
+  merchants: Merchant[];
+  lastUpdated: string;
+  location: LocationCoords;
+  radius: number;
+} 

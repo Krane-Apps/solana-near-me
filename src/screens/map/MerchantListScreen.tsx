@@ -496,6 +496,7 @@ const styles = StyleSheet.create({
   merchantsSection: {
     paddingHorizontal: Spacing.layout.screenPadding,
     paddingVertical: Spacing.lg,
+    marginTop: Spacing.xl,
   },
 
   merchantsTitle: {
