@@ -16,7 +16,7 @@ src/
 │   └── common/         # App-specific shared components (AccountInfo, ConnectWalletButton)
 ├── screens/            # Feature-based screen folders
 │   ├── welcome/        # WelcomeScreen + index.ts
-│   ├── map/            # MapScreen, MerchantListScreen, MerchantListBottomSheet + index.ts
+│   ├── map/            # MapScreen, MerchantListScreen + index.ts
 │   ├── payment/        # PaymentScreen, PaymentSuccessScreen, SolanaPayQR, SendMemoButton + index.ts
 │   ├── merchant/       # MerchantRegistrationScreen + index.ts
 │   ├── profile/        # UserProfileScreen + index.ts
