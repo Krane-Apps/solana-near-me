@@ -8,6 +8,7 @@ import {
   ScrollView,
   Alert,
   Linking,
+  Image,
 } from "react-native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../../lib/types";
@@ -172,7 +173,11 @@ const OptionsScreen: React.FC<Props> = ({ navigation }) => {
           <Card style={styles.infoCard}>
             <View style={styles.appInfo}>
               <View style={styles.appIcon}>
-                <Icon name="flash-on" size={32} color={SolanaColors.primary} />
+                <Image
+                  source={require("../../../assets/logo3D.png")}
+                  style={styles.appIconImage}
+                  resizeMode="contain"
+                />
               </View>
               <View style={styles.appDetails}>
                 <Text style={styles.appName}>NearMe</Text>
@@ -220,7 +225,8 @@ const styles = StyleSheet.create({
 
   // Header
   header: {
-    paddingVertical: Spacing["2xl"],
+    paddingVertical: Spacing.xl,
+    marginTop: Spacing.xl,
   },
 
   headerTitle: {
@@ -267,13 +273,18 @@ const styles = StyleSheet.create({
   },
 
   appIcon: {
-    width: 64,
-    height: 64,
+    width: 100,
+    height: 100,
     borderRadius: 16,
-    backgroundColor: SolanaColors.primary,
+    backgroundColor: SolanaColors.background.primary,
     justifyContent: "center",
     alignItems: "center",
     marginRight: Spacing.lg,
+  },
+
+  appIconImage: {
+    width: 120,
+    height: 120,
   },
 
   appIconText: {

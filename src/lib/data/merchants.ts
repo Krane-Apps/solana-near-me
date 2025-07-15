@@ -1,4 +1,5 @@
 import { Merchant } from '../types';
+import { encodeGeohash } from '../utils/geohash';
 
 // Bangalore coordinates: approximately 12.9716° N, 77.5946° E
 export const mockMerchants: Merchant[] = [
@@ -9,6 +10,12 @@ export const mockMerchants: Merchant[] = [
     category: 'Coffee Shop',
     latitude: 12.9753,
     longitude: 77.6089,
+    geopoint: {
+      latitude: 12.9753,
+      longitude: 77.6089,
+    },
+    geohash: encodeGeohash(12.9753, 77.6089),
+    city: 'Bangalore',
     walletAddress: '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',
     acceptedTokens: ['SOL', 'USDC'],
     rating: 4.5,
@@ -17,6 +24,7 @@ export const mockMerchants: Merchant[] = [
     isApproved: true,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    googleMapsLink: 'https://maps.app.goo.gl/CryptoCafeMGRoad',
   },
   {
     id: '2',
@@ -25,6 +33,12 @@ export const mockMerchants: Merchant[] = [
     category: 'Electronics',
     latitude: 12.9352,
     longitude: 77.6245,
+    geopoint: {
+      latitude: 12.9352,
+      longitude: 77.6245,
+    },
+    geohash: encodeGeohash(12.9352, 77.6245),
+    city: 'Bangalore',
     walletAddress: '4vJ9JU1bJJE96FWSJKvHsmmFADCg4gpZQff4P3bkLKi',
     acceptedTokens: ['SOL', 'USDC'],
     rating: 4.2,
@@ -33,6 +47,7 @@ export const mockMerchants: Merchant[] = [
     isApproved: true,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    googleMapsLink: 'https://maps.app.goo.gl/TechHubKoramangala',
   },
   {
     id: '3',
@@ -41,6 +56,12 @@ export const mockMerchants: Merchant[] = [
     category: 'Bakery',
     latitude: 12.9831,
     longitude: 77.6101,
+    geopoint: {
+      latitude: 12.9831,
+      longitude: 77.6101,
+    },
+    geohash: encodeGeohash(12.9831, 77.6101),
+    city: 'Bangalore',
     walletAddress: '8FMqBdRnJKbqQPK9fQanrFqzgjuiT1hedDAp5BowQGWN',
     acceptedTokens: ['SOL', 'USDC'],
     rating: 4.7,
@@ -49,6 +70,7 @@ export const mockMerchants: Merchant[] = [
     isApproved: true,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    googleMapsLink: 'https://maps.app.goo.gl/SolanaSweetsCommercial',
   },
   {
     id: '4',
@@ -57,6 +79,12 @@ export const mockMerchants: Merchant[] = [
     category: 'Bookstore',
     latitude: 12.9719,
     longitude: 77.6081,
+    geopoint: {
+      latitude: 12.9719,
+      longitude: 77.6081,
+    },
+    geohash: encodeGeohash(12.9719, 77.6081),
+    city: 'Bangalore',
     walletAddress: '5KKyLLQQvZZp6gtQz3JHdzneeEuAhvLpmm1GjJu4rCWB',
     acceptedTokens: ['SOL', 'USDC'],
     rating: 4.3,
@@ -65,6 +93,7 @@ export const mockMerchants: Merchant[] = [
     isApproved: true,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    googleMapsLink: 'https://maps.app.goo.gl/BlockchainBooksBrigade',
   },
   {
     id: '5',
@@ -73,6 +102,12 @@ export const mockMerchants: Merchant[] = [
     category: 'Restaurant',
     latitude: 12.9784,
     longitude: 77.6408,
+    geopoint: {
+      latitude: 12.9784,
+      longitude: 77.6408,
+    },
+    geohash: encodeGeohash(12.9784, 77.6408),
+    city: 'Bangalore',
     walletAddress: '9WzDXwBbmkg8ZTbNMqUxvQRAn9MqT8k6jKqP4F2r1Cy',
     acceptedTokens: ['SOL', 'USDC'],
     rating: 4.6,
@@ -81,6 +116,7 @@ export const mockMerchants: Merchant[] = [
     isApproved: true,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    googleMapsLink: 'https://maps.app.goo.gl/DeFiDinerIndiranagar',
   },
   {
     id: '6',
@@ -89,6 +125,12 @@ export const mockMerchants: Merchant[] = [
     category: 'Co-working',
     latitude: 12.9081,
     longitude: 77.6476,
+    geopoint: {
+      latitude: 12.9081,
+      longitude: 77.6476,
+    },
+    geohash: encodeGeohash(12.9081, 77.6476),
+    city: 'Bangalore',
     walletAddress: 'AQoKYV7tYpTrFZN6P5oUufbQKAUr9mNYGe1TTJC9wajM',
     acceptedTokens: ['SOL', 'USDC'],
     rating: 4.4,
@@ -105,6 +147,12 @@ export const mockMerchants: Merchant[] = [
     category: 'Beauty & Wellness',
     latitude: 12.9698,
     longitude: 77.7499,
+    geopoint: {
+      latitude: 12.9698,
+      longitude: 77.7499,
+    },
+    geohash: encodeGeohash(12.9698, 77.7499),
+    city: 'Bangalore',
     walletAddress: 'CuieVDEDtLo7FypA9SbLM9saXFdb1dsshEkyErMqkRQq',
     acceptedTokens: ['SOL', 'USDC'],
     rating: 4.1,
@@ -121,6 +169,12 @@ export const mockMerchants: Merchant[] = [
     category: 'Pharmacy',
     latitude: 12.9279,
     longitude: 77.5937,
+    geopoint: {
+      latitude: 12.9279,
+      longitude: 77.5937,
+    },
+    geohash: encodeGeohash(12.9279, 77.5937),
+    city: 'Bangalore',
     walletAddress: 'DQyrAcCrDXQ3NeoqGgDCZwBvkDDRwaan2ej2MqBSLoL',
     acceptedTokens: ['SOL', 'USDC'],
     rating: 4.0,

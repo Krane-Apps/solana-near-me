@@ -6,15 +6,20 @@ import {
   SafeAreaView,
   ScrollView,
   ActivityIndicator,
+  TouchableOpacity,
 } from "react-native";
 import { showMessage } from "react-native-flash-message";
 import { StackNavigationProp } from "@react-navigation/stack";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { RootStackParamList } from "../../lib/types";
 import { SolanaColors, Typography, Spacing } from "../../lib/theme";
-import { Button, Card, TextInput } from "../../components/ui";
+import { Button, TextInput } from "../../components/ui";
 import { locationService } from "../../lib/services/locationService";
 import { LocationCoords } from "../../lib/types";
 import { MerchantService } from "../../lib/firebase/services";
+import { encodeGeohash } from "../../lib/utils/geohash";
+import { logger } from "../../lib/utils/logger";
 
 type MerchantRegistrationScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -25,6 +30,8 @@ interface Props {
   navigation: MerchantRegistrationScreenNavigationProp;
 }
 
+const FILE_NAME = "MerchantRegistrationScreen";
+
 const MerchantRegistrationScreen: React.FC<Props> = ({ navigation }) => {
   const [formData, setFormData] = useState({
     name: "",
@@ -34,10 +41,12 @@ const MerchantRegistrationScreen: React.FC<Props> = ({ navigation }) => {
     description: "",
     contactEmail: "",
     contactPhone: "",
+    googleMapsLink: "",
   });
   const [location, setLocation] = useState<LocationCoords | null>(null);
   const [loading, setLoading] = useState(false);
   const [gettingLocation, setGettingLocation] = useState(false);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     // Get current location when component mounts
@@ -47,9 +56,15 @@ const MerchantRegistrationScreen: React.FC<Props> = ({ navigation }) => {
   const getCurrentLocation = async () => {
     setGettingLocation(true);
     try {
+      logger.info(
+        FILE_NAME,
+        "Getting current location for merchant registration"
+      );
+
       if (!locationService.getHasPermission()) {
         const granted = await locationService.requestLocationPermission();
         if (!granted) {
+          logger.warn(FILE_NAME, "Location permission denied");
           showMessage({
             message: "Location Required",
             description:
@@ -63,8 +78,13 @@ const MerchantRegistrationScreen: React.FC<Props> = ({ navigation }) => {
 
       const currentLocation = await locationService.getCurrentLocation();
       setLocation(currentLocation);
+      logger.info(
+        FILE_NAME,
+        "Location captured for merchant registration",
+        currentLocation
+      );
     } catch (error) {
-      console.error("Error getting location:", error);
+      logger.error(FILE_NAME, "Error getting location:", error);
       showMessage({
         message: "Location Error",
         description: "Could not get your current location. Please try again.",
@@ -120,31 +140,18 @@ const MerchantRegistrationScreen: React.FC<Props> = ({ navigation }) => {
     if (!location) {
       showMessage({
         message: "Validation Error",
-        description: "Location is required. Please allow location access.",
+        description: "Location is required",
         type: "warning",
         duration: 3000,
       });
       return false;
     }
-
-    // Basic wallet address validation (Solana addresses are typically 32-44 characters)
-    if (
-      formData.walletAddress.length < 32 ||
-      formData.walletAddress.length > 44
-    ) {
-      showMessage({
-        message: "Validation Error",
-        description: "Please enter a valid Solana wallet address",
-        type: "warning",
-        duration: 3000,
-      });
-      return false;
-    }
-
     return true;
   };
 
   const handleSubmit = async () => {
+    logger.info(FILE_NAME, "Submitting merchant registration");
+
     if (!validateForm()) return;
 
     setLoading(true);
@@ -155,22 +162,33 @@ const MerchantRegistrationScreen: React.FC<Props> = ({ navigation }) => {
         category: formData.category.trim(),
         latitude: location!.latitude,
         longitude: location!.longitude,
+        geopoint: {
+          latitude: location!.latitude,
+          longitude: location!.longitude,
+        },
+        geohash: encodeGeohash(location!.latitude, location!.longitude),
+        city: "Bangalore", // Default city for now, could be improved with reverse geocoding
         walletAddress: formData.walletAddress.trim(),
         acceptedTokens: ["SOL", "USDC"],
         isActive: false, // Will be activated after approval
         isApproved: false, // Requires admin approval
         rating: 0,
         description: formData.description.trim(),
-        registeredAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
         ...(formData.contactEmail.trim() && {
           contactEmail: formData.contactEmail.trim(),
         }),
         ...(formData.contactPhone.trim() && {
           contactPhone: formData.contactPhone.trim(),
         }),
+        ...(formData.googleMapsLink.trim() && {
+          googleMapsLink: formData.googleMapsLink.trim(),
+        }),
       };
 
       await MerchantService.addMerchant(merchantData);
+      logger.info(FILE_NAME, "Merchant registration submitted successfully");
 
       showMessage({
         message: "Registration Submitted",
@@ -184,7 +202,7 @@ const MerchantRegistrationScreen: React.FC<Props> = ({ navigation }) => {
       // Navigate back after a short delay
       setTimeout(() => navigation.goBack(), 2000);
     } catch (error) {
-      console.error("Error registering merchant:", error);
+      logger.error(FILE_NAME, "Error registering merchant:", error);
       showMessage({
         message: "Registration Error",
         description: "Failed to submit registration. Please try again.",
@@ -196,46 +214,174 @@ const MerchantRegistrationScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
+  const renderLocationCard = () => (
+    <View style={styles.locationCard}>
+      <View style={styles.locationHeader}>
+        <MaterialIcons
+          name="location-on"
+          size={24}
+          color={SolanaColors.primary}
+        />
+        <Text style={styles.locationTitle}>Business Location</Text>
+        <Text style={styles.requiredBadge}>Required</Text>
+      </View>
+
+      {gettingLocation ? (
+        <View style={styles.locationContent}>
+          <ActivityIndicator size="small" color={SolanaColors.primary} />
+          <Text style={styles.locationStatusText}>
+            Getting your location...
+          </Text>
+        </View>
+      ) : location ? (
+        <View style={styles.locationContent}>
+          <View style={styles.locationSuccessContainer}>
+            <MaterialIcons
+              name="check-circle"
+              size={20}
+              color={SolanaColors.status.success}
+            />
+            <Text style={styles.locationSuccessText}>
+              Location captured successfully
+            </Text>
+          </View>
+          <Text style={styles.locationCoords}>
+            {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
+          </Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={getCurrentLocation}
+          >
+            <MaterialIcons
+              name="refresh"
+              size={16}
+              color={SolanaColors.text.secondary}
+            />
+            <Text style={styles.retryButtonText}>Update Location</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View style={styles.locationContent}>
+          <View style={styles.locationErrorContainer}>
+            <MaterialIcons
+              name="error"
+              size={20}
+              color={SolanaColors.status.error}
+            />
+            <Text style={styles.locationErrorText}>Location not found</Text>
+          </View>
+          <Text style={styles.locationHelpText}>
+            We need your location to help customers find your business
+          </Text>
+          <TouchableOpacity
+            style={styles.getLocationButton}
+            onPress={getCurrentLocation}
+          >
+            <MaterialIcons
+              name="my-location"
+              size={20}
+              color={SolanaColors.white}
+            />
+            <Text style={styles.getLocationButtonText}>
+              Get Current Location
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
+  );
+
+  const renderFormSection = (title: string, children: React.ReactNode) => (
+    <View style={styles.formSection}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      {children}
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
-        <Card style={styles.formCard}>
-          <Text style={styles.title}>Register Your Business</Text>
-          <Text style={styles.subtitle}>
-            Join the NearMe network and start accepting crypto payments
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.7}
+        >
+          <MaterialIcons
+            name="arrow-back"
+            size={24}
+            color={SolanaColors.text.primary}
+          />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Register Business</Text>
+        <View style={styles.headerSpacer} />
+      </View>
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: insets.bottom + 20 },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Hero Section */}
+        <View style={styles.heroSection}>
+          <MaterialIcons name="store" size={48} color={SolanaColors.primary} />
+          <Text style={styles.heroTitle}>Join NearMe</Text>
+          <Text style={styles.heroSubtitle}>
+            Start accepting crypto payments and reach customers in your area
           </Text>
+        </View>
 
-          {/* Business Name */}
-          <TextInput
-            label="Business Name *"
-            placeholder="Enter your business name"
-            value={formData.name}
-            onChangeText={(value) => updateFormData("name", value)}
-            containerStyle={styles.inputContainer}
-          />
+        {/* Location Section - Top Priority */}
+        {renderLocationCard()}
 
-          {/* Address */}
-          <TextInput
-            label="Address *"
-            placeholder="Enter your business address"
-            value={formData.address}
-            onChangeText={(value) => updateFormData("address", value)}
-            containerStyle={styles.inputContainer}
-            multiline
-          />
+        {/* Business Information */}
+        {renderFormSection(
+          "Business Information",
+          <>
+            <TextInput
+              label="Business Name"
+              placeholder="Enter your business name"
+              value={formData.name}
+              onChangeText={(value) => updateFormData("name", value)}
+              containerStyle={styles.inputContainer}
+            />
 
-          {/* Category */}
-          <TextInput
-            label="Category *"
-            placeholder="e.g., Coffee Shop, Restaurant, Retail"
-            value={formData.category}
-            onChangeText={(value) => updateFormData("category", value)}
-            containerStyle={styles.inputContainer}
-          />
+            <TextInput
+              label="Category"
+              placeholder="e.g., Coffee Shop, Restaurant, Retail"
+              value={formData.category}
+              onChangeText={(value) => updateFormData("category", value)}
+              containerStyle={styles.inputContainer}
+            />
 
-          {/* Wallet Address */}
+            <TextInput
+              label="Business Address"
+              placeholder="Enter your full business address"
+              value={formData.address}
+              onChangeText={(value) => updateFormData("address", value)}
+              containerStyle={styles.inputContainer}
+              multiline
+            />
+
+            <TextInput
+              label="Description (Optional)"
+              placeholder="Tell customers about your business"
+              value={formData.description}
+              onChangeText={(value) => updateFormData("description", value)}
+              containerStyle={styles.inputContainer}
+              multiline
+            />
+          </>
+        )}
+
+        {/* Payment Information */}
+        {renderFormSection(
+          "Payment Setup",
           <TextInput
-            label="Solana Wallet Address *"
+            label="Solana Wallet Address"
             placeholder="Paste your Solana wallet address"
             value={formData.walletAddress}
             onChangeText={(value) => updateFormData("walletAddress", value)}
@@ -243,80 +389,58 @@ const MerchantRegistrationScreen: React.FC<Props> = ({ navigation }) => {
             autoCapitalize="none"
             autoCorrect={false}
           />
+        )}
 
-          {/* Description */}
-          <TextInput
-            label="Description"
-            placeholder="Describe your business (optional)"
-            value={formData.description}
-            onChangeText={(value) => updateFormData("description", value)}
-            containerStyle={styles.inputContainer}
-            multiline
-          />
+        {/* Contact Information */}
+        {renderFormSection(
+          "Contact Information (Optional)",
+          <>
+            <TextInput
+              label="Contact Email"
+              placeholder="your@email.com"
+              value={formData.contactEmail}
+              onChangeText={(value) => updateFormData("contactEmail", value)}
+              containerStyle={styles.inputContainer}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
 
-          {/* Contact Email */}
-          <TextInput
-            label="Contact Email"
-            placeholder="your@email.com (optional)"
-            value={formData.contactEmail}
-            onChangeText={(value) => updateFormData("contactEmail", value)}
-            containerStyle={styles.inputContainer}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
+            <TextInput
+              label="Contact Phone"
+              placeholder="+91-XXXXXXXXXX"
+              value={formData.contactPhone}
+              onChangeText={(value) => updateFormData("contactPhone", value)}
+              containerStyle={styles.inputContainer}
+              keyboardType="phone-pad"
+            />
 
-          {/* Contact Phone */}
-          <TextInput
-            label="Contact Phone"
-            placeholder="+91-XXXXXXXXXX (optional)"
-            value={formData.contactPhone}
-            onChangeText={(value) => updateFormData("contactPhone", value)}
-            containerStyle={styles.inputContainer}
-            keyboardType="phone-pad"
-          />
+            <TextInput
+              label="Google Maps Link"
+              placeholder="https://maps.app.goo.gl/..."
+              value={formData.googleMapsLink}
+              onChangeText={(value) => updateFormData("googleMapsLink", value)}
+              containerStyle={styles.inputContainer}
+              keyboardType="url"
+              autoCapitalize="none"
+            />
+          </>
+        )}
 
-          {/* Location Status */}
-          <View style={styles.locationContainer}>
-            <Text style={styles.locationLabel}>Location</Text>
-            {gettingLocation ? (
-              <View style={styles.locationStatus}>
-                <ActivityIndicator size="small" color={SolanaColors.accent} />
-                <Text style={styles.locationText}>
-                  Getting your location...
-                </Text>
-              </View>
-            ) : location ? (
-              <View style={styles.locationStatus}>
-                <Text style={styles.locationSuccessText}>
-                  ✓ Location captured
-                </Text>
-                <Text style={styles.locationCoords}>
-                  {location.latitude.toFixed(6)},{" "}
-                  {location.longitude.toFixed(6)}
-                </Text>
-              </View>
-            ) : (
-              <View style={styles.locationStatus}>
-                <Text style={styles.locationErrorText}>Location required</Text>
-                <Button
-                  title="Get Location"
-                  onPress={getCurrentLocation}
-                  variant="outline"
-                  size="small"
-                  style={styles.locationButton}
-                />
-              </View>
-            )}
-          </View>
-
-          {/* Submit Button */}
+        {/* Submit Button */}
+        <View style={styles.submitSection}>
           <Button
             title={loading ? "Submitting..." : "Submit Registration"}
             onPress={handleSubmit}
             disabled={loading || !location}
-            style={styles.submitButton}
+            loading={loading}
+            variant="primary"
           />
-        </Card>
+
+          <Text style={styles.submitNote}>
+            Your registration will be reviewed and you'll be notified once
+            approved
+          </Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -327,70 +451,210 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: SolanaColors.background.primary,
   },
+
+  // Header
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: Spacing.layout.screenPadding,
+    paddingVertical: Spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: SolanaColors.border.secondary,
+  },
+
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: SolanaColors.background.secondary,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  headerTitle: {
+    fontSize: Typography.fontSize.xl,
+    fontWeight: Typography.fontWeight.bold,
+    color: SolanaColors.text.primary,
+  },
+
+  headerSpacer: {
+    width: 40,
+  },
+
+  // Scroll Content
   scrollView: {
     flex: 1,
   },
-  formCard: {
-    margin: Spacing.layout.screenPadding,
-    backgroundColor: SolanaColors.background.card,
+
+  scrollContent: {
+    paddingHorizontal: Spacing.layout.screenPadding,
   },
-  title: {
+
+  // Hero Section
+  heroSection: {
+    alignItems: "center",
+    paddingVertical: Spacing["2xl"],
+    marginBottom: Spacing.xl,
+  },
+
+  heroTitle: {
     fontSize: Typography.fontSize["2xl"],
     fontWeight: Typography.fontWeight.bold,
     color: SolanaColors.text.primary,
+    marginTop: Spacing.lg,
     marginBottom: Spacing.sm,
-    textAlign: "center",
   },
-  subtitle: {
+
+  heroSubtitle: {
     fontSize: Typography.fontSize.base,
     color: SolanaColors.text.secondary,
     textAlign: "center",
+    lineHeight: Typography.lineHeight.relaxed * Typography.fontSize.base,
+    paddingHorizontal: Spacing.lg,
+  },
+
+  // Location Card
+  locationCard: {
+    backgroundColor: SolanaColors.background.card,
+    borderRadius: Spacing.borderRadius.xl,
+    padding: Spacing.xl,
+    marginBottom: Spacing["2xl"],
+    borderWidth: 2,
+    borderColor: SolanaColors.primary + "20",
+  },
+
+  locationHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing.lg,
+  },
+
+  locationTitle: {
+    fontSize: Typography.fontSize.lg,
+    fontWeight: Typography.fontWeight.bold,
+    color: SolanaColors.text.primary,
+    marginLeft: Spacing.sm,
+    flex: 1,
+  },
+
+  requiredBadge: {
+    fontSize: Typography.fontSize.xs,
+    fontWeight: Typography.fontWeight.medium,
+    color: SolanaColors.status.error,
+    backgroundColor: SolanaColors.status.error + "20",
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: Spacing.borderRadius.sm,
+  },
+
+  locationContent: {
+    alignItems: "center",
+  },
+
+  locationStatusText: {
+    fontSize: Typography.fontSize.base,
+    color: SolanaColors.text.secondary,
+    marginLeft: Spacing.sm,
+  },
+
+  locationSuccessContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing.sm,
+  },
+
+  locationSuccessText: {
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.medium,
+    color: SolanaColors.status.success,
+    marginLeft: Spacing.sm,
+  },
+
+  locationCoords: {
+    fontSize: Typography.fontSize.sm,
+    color: SolanaColors.text.tertiary,
+    fontFamily: "monospace",
+    marginBottom: Spacing.md,
+  },
+
+  retryButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: Spacing.sm,
+  },
+
+  retryButtonText: {
+    fontSize: Typography.fontSize.sm,
+    color: SolanaColors.text.secondary,
+    marginLeft: Spacing.xs,
+  },
+
+  locationErrorContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing.sm,
+  },
+
+  locationErrorText: {
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.medium,
+    color: SolanaColors.status.error,
+    marginLeft: Spacing.sm,
+  },
+
+  locationHelpText: {
+    fontSize: Typography.fontSize.sm,
+    color: SolanaColors.text.secondary,
+    textAlign: "center",
+    marginBottom: Spacing.lg,
+    lineHeight: Typography.lineHeight.normal * Typography.fontSize.sm,
+  },
+
+  getLocationButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: SolanaColors.primary,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderRadius: Spacing.borderRadius.lg,
+  },
+
+  getLocationButtonText: {
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.medium,
+    color: SolanaColors.white,
+    marginLeft: Spacing.sm,
+  },
+
+  // Form Sections
+  formSection: {
     marginBottom: Spacing["2xl"],
   },
+
+  sectionTitle: {
+    fontSize: Typography.fontSize.lg,
+    fontWeight: Typography.fontWeight.bold,
+    color: SolanaColors.text.primary,
+    marginBottom: Spacing.lg,
+  },
+
   inputContainer: {
     marginBottom: Spacing.lg,
   },
-  locationContainer: {
+
+  // Submit Section
+  submitSection: {
+    marginTop: Spacing.xl,
     marginBottom: Spacing["2xl"],
   },
-  locationLabel: {
-    fontSize: Typography.fontSize.base,
-    fontWeight: Typography.fontWeight.medium,
-    color: SolanaColors.text.primary,
-    marginBottom: Spacing.sm,
-  },
-  locationStatus: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: Spacing.md,
-    backgroundColor: SolanaColors.background.secondary,
-    borderRadius: Spacing.borderRadius.md,
-  },
-  locationText: {
-    marginLeft: Spacing.sm,
+
+  submitNote: {
+    fontSize: Typography.fontSize.sm,
     color: SolanaColors.text.secondary,
-    fontSize: Typography.fontSize.sm,
-  },
-  locationSuccessText: {
-    color: SolanaColors.status.success,
-    fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.medium,
-  },
-  locationCoords: {
-    marginLeft: Spacing.sm,
-    color: SolanaColors.text.secondary,
-    fontSize: Typography.fontSize.xs,
-    fontFamily: "monospace",
-  },
-  locationErrorText: {
-    color: SolanaColors.status.error,
-    fontSize: Typography.fontSize.sm,
-  },
-  locationButton: {
-    marginLeft: Spacing.sm,
-  },
-  submitButton: {
-    marginTop: Spacing.lg,
+    textAlign: "center",
+    marginTop: Spacing.md,
+    lineHeight: Typography.lineHeight.normal * Typography.fontSize.sm,
   },
 });
 

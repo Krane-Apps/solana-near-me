@@ -14,6 +14,7 @@ import {
 } from './services';
 import { Merchant, MerchantQueryOptions, LocationCoords, CachedMerchantData } from '../types';
 import { logger } from '../utils/logger';
+import { logFirebaseOperation } from '../utils/firebaseMetrics';
 
 // Add a small delay to ensure Firebase is initialized
 const FIREBASE_INIT_DELAY = 100;
@@ -35,6 +36,9 @@ export const useMerchants = () => {
         
         const data = await MerchantService.getAllMerchants();
         setMerchants(data);
+        
+        // Log hook usage
+        logFirebaseOperation.read('merchants', 'useMerchants', data.length);
       } catch (err) {
         console.error('Error fetching merchants:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch merchants');

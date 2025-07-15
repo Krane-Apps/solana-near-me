@@ -13,6 +13,7 @@ import {
   clearMerchantCache 
 } from '../lib/utils/firebaseCleanup';
 import { logger } from '../lib/utils/logger';
+import { encodeGeohash } from '../lib/utils/geohash';
 
 const FILE_NAME = 'merchantCleanup';
 
@@ -68,6 +69,11 @@ export async function uploadOptimizedMerchants(merchants: any[]) {
       category: merchant.category,
       latitude: merchant.latitude,
       longitude: merchant.longitude,
+      geopoint: {
+        latitude: merchant.latitude,
+        longitude: merchant.longitude,
+      },
+      geohash: encodeGeohash(merchant.latitude, merchant.longitude),
       city: merchant.city || 'Bangalore', // Default city
       walletAddress: merchant.walletAddress,
       acceptedTokens: merchant.acceptedTokens || ['SOL', 'USDC'],
@@ -78,7 +84,8 @@ export async function uploadOptimizedMerchants(merchants: any[]) {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       contactEmail: merchant.contactEmail,
-      contactPhone: merchant.contactPhone
+      contactPhone: merchant.contactPhone,
+      googleMapsLink: merchant.googleMapsLink
     }));
     
     await bulkUploadMerchants(optimizedMerchants);

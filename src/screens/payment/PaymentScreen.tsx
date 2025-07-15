@@ -5,21 +5,23 @@ import {
   StyleSheet,
   SafeAreaView,
   TouchableOpacity,
-  ScrollView,
   ActivityIndicator,
   Alert,
+  TextInput as RNTextInput,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { showMessage } from "react-native-flash-message";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RouteProp } from "@react-navigation/native";
 import { PublicKey } from "@solana/web3.js";
+import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import {
   transact,
   Web3MobileWallet,
 } from "@solana-mobile/mobile-wallet-adapter-protocol-web3js";
 import { RootStackParamList } from "../../lib/types";
 import { SolanaColors, Typography, Spacing } from "../../lib/theme";
-import { Card, Button, TextInput } from "../../components/ui";
+import { Button, TextInput } from "../../components/ui";
 import { useAuthorization } from "../../providers/AppProviders";
 import { useWalletBalance } from "../../hooks/useWalletBalance";
 import { useConnection } from "../../hooks/useConnection";
@@ -41,62 +43,77 @@ interface Props {
   route: PaymentScreenRouteProp;
 }
 
+const FILE_NAME = "PaymentScreen";
+
 const PaymentScreen: React.FC<Props> = ({ navigation, route }) => {
   const { merchantId, merchantName } = route.params;
   const [amount, setAmount] = useState("");
   const [selectedToken, setSelectedToken] = useState<"SOL" | "USDC">("SOL");
   const [processing, setProcessing] = useState(false);
+  const insets = useSafeAreaInsets();
 
   // MWA hooks
   const { authorization, authorizeSession } = useAuthorization();
   const { connection } = useConnection();
-
-  // Firebase hooks
-  const { merchants: firebaseMerchants } = useMerchants();
-
-  // Get wallet balance
-  const { balance } = useWalletBalance(
+  const { balance, refetch } = useWalletBalance(
     authorization?.selectedAccount?.publicKey || null
   );
 
-  // Initialize Solana Pay service
+  // Firebase hooks
+  const { merchants, loading: merchantsLoading } = useMerchants();
+
+  // Solana Pay service
   const solanaPayService = useMemo(
     () => new SolanaPayService(connection),
     [connection]
   );
 
-  // Find merchant details
-  const merchants =
-    firebaseMerchants.length > 0 ? firebaseMerchants : mockMerchants;
-  const merchant = merchants.find((m) => m.id === merchantId);
-
-  const handleAmountChange = (value: string) => {
-    // Only allow numbers and one decimal point
-    const numericValue = value.replace(/[^0-9.]/g, "");
-    const parts = numericValue.split(".");
-    if (parts.length <= 2) {
-      setAmount(numericValue);
+  // Find merchant
+  const merchant = useMemo(() => {
+    if (merchantId) {
+      return (
+        merchants.find((m) => m.id === merchantId) ||
+        mockMerchants.find((m) => m.id === merchantId)
+      );
     }
-  };
+    return null;
+  }, [merchants, merchantId]);
 
+  // Calculate USD value
   const getUSDAmount = () => {
-    const numAmount = parseFloat(amount) || 0;
+    if (!amount) return 0;
+    const tokenAmount = parseFloat(amount);
     if (selectedToken === "SOL") {
-      return numAmount * EXCHANGE_RATES.SOL_TO_USD;
+      return tokenAmount * EXCHANGE_RATES.SOL_TO_USD;
     }
-    return numAmount * EXCHANGE_RATES.USDC_TO_USD;
+    return tokenAmount; // USDC is 1:1 with USD
   };
 
   const getAvailableBalance = () => {
-    if (selectedToken === "SOL") {
-      return balance.sol;
-    }
-    return balance.usdc;
+    return selectedToken === "SOL" ? balance.sol : balance.usdc;
   };
 
   const isInsufficientBalance = () => {
-    const numAmount = parseFloat(amount) || 0;
-    return numAmount > getAvailableBalance();
+    if (!amount) return false;
+    const tokenAmount = parseFloat(amount);
+    return tokenAmount > getAvailableBalance();
+  };
+
+  const handleAmountChange = (text: string) => {
+    // Allow only numbers and decimal point
+    const cleanText = text.replace(/[^0-9.]/g, "");
+
+    // Prevent multiple decimal points
+    const parts = cleanText.split(".");
+    if (parts.length > 2) {
+      return;
+    }
+
+    setAmount(cleanText);
+  };
+
+  const handleMaxAmount = () => {
+    setAmount(getAvailableBalance().toString());
   };
 
   const handlePayment = async () => {
@@ -143,7 +160,7 @@ const PaymentScreen: React.FC<Props> = ({ navigation, route }) => {
           paymentRequest
         );
 
-        console.log("Created transaction:", transaction);
+        console.log(`${FILE_NAME}: Created transaction:`, transaction);
 
         // Sign and send the transaction
         const signatures = await wallet.signAndSendTransactions({
@@ -151,7 +168,7 @@ const PaymentScreen: React.FC<Props> = ({ navigation, route }) => {
         });
 
         const signature = signatures[0];
-        console.log("Transaction signature:", signature);
+        console.log(`${FILE_NAME}: Transaction signature:`, signature);
 
         // Confirm the transaction
         const confirmed = await solanaPayService.confirmTransaction(signature);
@@ -165,7 +182,7 @@ const PaymentScreen: React.FC<Props> = ({ navigation, route }) => {
           signature,
           paymentRequest
         );
-        console.log("Payment validation result:", isValid);
+        console.log(`${FILE_NAME}: Payment validation result:`, isValid);
 
         return {
           signature,
@@ -197,7 +214,7 @@ const PaymentScreen: React.FC<Props> = ({ navigation, route }) => {
         throw new Error("Transaction was not confirmed");
       }
     } catch (error) {
-      console.error("Payment failed:", error);
+      console.error(`${FILE_NAME}: Payment failed:`, error);
 
       let errorMessage = "Please try again";
       if (error instanceof Error) {
@@ -223,179 +240,6 @@ const PaymentScreen: React.FC<Props> = ({ navigation, route }) => {
     }
   };
 
-  const handleMaxAmount = () => {
-    setAmount(getAvailableBalance().toString());
-  };
-
-  const renderMerchantInfo = () => (
-    <Card style={styles.merchantCard}>
-      <View style={styles.merchantHeader}>
-        <View style={styles.merchantIcon}>
-          <Text style={styles.merchantIconText}>🏪</Text>
-        </View>
-        <View style={styles.merchantInfo}>
-          <Text style={styles.merchantName}>
-            {merchant?.name || merchantName}
-          </Text>
-          <Text style={styles.merchantCategory}>
-            {merchant?.category || "Merchant"}
-          </Text>
-          {merchant?.address && (
-            <Text style={styles.merchantAddress}>📍 {merchant.address}</Text>
-          )}
-        </View>
-      </View>
-    </Card>
-  );
-
-  const renderTokenSelector = () => (
-    <Card style={styles.tokenCard}>
-      <Text style={styles.sectionTitle}>Select Token</Text>
-      <View style={styles.tokenOptions}>
-        <TouchableOpacity
-          style={[
-            styles.tokenOption,
-            selectedToken === "SOL" && styles.tokenOptionSelected,
-          ]}
-          onPress={() => setSelectedToken("SOL")}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.tokenSymbol}>◎</Text>
-          <View style={styles.tokenInfo}>
-            <Text
-              style={[
-                styles.tokenName,
-                selectedToken === "SOL" && styles.tokenNameSelected,
-              ]}
-            >
-              SOL
-            </Text>
-            <Text
-              style={[
-                styles.tokenBalance,
-                selectedToken === "SOL" && styles.tokenBalanceSelected,
-              ]}
-            >
-              {balance.sol.toFixed(4)} available
-            </Text>
-          </View>
-          <View
-            style={[
-              styles.tokenRadio,
-              selectedToken === "SOL" && styles.tokenRadioSelected,
-            ]}
-          >
-            {selectedToken === "SOL" && <View style={styles.tokenRadioDot} />}
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.tokenOption,
-            selectedToken === "USDC" && styles.tokenOptionSelected,
-          ]}
-          onPress={() => setSelectedToken("USDC")}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.tokenSymbol}>$</Text>
-          <View style={styles.tokenInfo}>
-            <Text
-              style={[
-                styles.tokenName,
-                selectedToken === "USDC" && styles.tokenNameSelected,
-              ]}
-            >
-              USDC
-            </Text>
-            <Text
-              style={[
-                styles.tokenBalance,
-                selectedToken === "USDC" && styles.tokenBalanceSelected,
-              ]}
-            >
-              {balance.usdc.toFixed(2)} available
-            </Text>
-          </View>
-          <View
-            style={[
-              styles.tokenRadio,
-              selectedToken === "USDC" && styles.tokenRadioSelected,
-            ]}
-          >
-            {selectedToken === "USDC" && <View style={styles.tokenRadioDot} />}
-          </View>
-        </TouchableOpacity>
-      </View>
-    </Card>
-  );
-
-  const renderAmountInput = () => (
-    <Card style={styles.amountCard}>
-      <Text style={styles.sectionTitle}>Amount</Text>
-      <View style={styles.amountInputContainer}>
-        <TextInput
-          style={styles.amountInput}
-          value={amount}
-          onChangeText={handleAmountChange}
-          placeholder="0.00"
-          keyboardType="decimal-pad"
-          variant="filled"
-        />
-        <TouchableOpacity
-          style={styles.maxButton}
-          onPress={handleMaxAmount}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.maxButtonText}>MAX</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.amountDetails}>
-        <View style={styles.amountRow}>
-          <Text style={styles.amountLabel}>Amount in {selectedToken}</Text>
-          <Text style={styles.amountValue}>
-            {amount || "0.00"} {selectedToken}
-          </Text>
-        </View>
-        <View style={styles.amountRow}>
-          <Text style={styles.amountLabel}>USD Value</Text>
-          <Text style={styles.amountValue}>${getUSDAmount().toFixed(2)}</Text>
-        </View>
-        {isInsufficientBalance() && (
-          <Text style={styles.errorText}>Insufficient balance</Text>
-        )}
-      </View>
-    </Card>
-  );
-
-  const renderPaymentSummary = () => (
-    <Card style={styles.summaryCard}>
-      <Text style={styles.sectionTitle}>Payment Summary</Text>
-      <View style={styles.summaryRow}>
-        <Text style={styles.summaryLabel}>To</Text>
-        <Text style={styles.summaryValue}>
-          {merchant?.name || merchantName}
-        </Text>
-      </View>
-      <View style={styles.summaryRow}>
-        <Text style={styles.summaryLabel}>Amount</Text>
-        <Text style={styles.summaryValue}>
-          {amount || "0.00"} {selectedToken}
-        </Text>
-      </View>
-      <View style={styles.summaryRow}>
-        <Text style={styles.summaryLabel}>USD Value</Text>
-        <Text style={styles.summaryValue}>${getUSDAmount().toFixed(2)}</Text>
-      </View>
-      <View style={[styles.summaryRow, styles.summaryRowTotal]}>
-        <Text style={styles.summaryLabelTotal}>Total</Text>
-        <Text style={styles.summaryValueTotal}>
-          {amount || "0.00"} {selectedToken}
-        </Text>
-      </View>
-    </Card>
-  );
-
   if (!merchant && !merchantName) {
     return (
       <SafeAreaView style={styles.container}>
@@ -416,52 +260,164 @@ const PaymentScreen: React.FC<Props> = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.backButtonText}>←</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Make Payment</Text>
-          <View style={styles.placeholder} />
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.7}
+        >
+          <MaterialIcons
+            name="arrow-back"
+            size={24}
+            color={SolanaColors.text.primary}
+          />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Payment</Text>
+        <View style={styles.headerSpacer} />
+      </View>
+
+      {/* Content */}
+      <View style={styles.content}>
+        {/* Merchant Info */}
+        <View style={styles.merchantSection}>
+          <View style={styles.merchantIcon}>
+            <MaterialIcons
+              name="store"
+              size={28}
+              color={SolanaColors.primary}
+            />
+          </View>
+          <View style={styles.merchantDetails}>
+            <Text style={styles.merchantName} numberOfLines={1}>
+              {merchant?.name || merchantName}
+            </Text>
+            <Text style={styles.merchantCategory} numberOfLines={1}>
+              {merchant?.category || "Merchant"}
+            </Text>
+          </View>
         </View>
 
-        {/* Merchant Info */}
-        {renderMerchantInfo()}
+        {/* Amount Input Section */}
+        <View style={styles.amountSection}>
+          <Text style={styles.sectionTitle}>Amount</Text>
+          <View style={styles.amountInputContainer}>
+            <Text style={styles.currencySymbol}>
+              {selectedToken === "SOL" ? "◎" : "$"}
+            </Text>
+            <RNTextInput
+              value={amount}
+              onChangeText={handleAmountChange}
+              placeholder="0.00"
+              keyboardType="decimal-pad"
+              style={styles.amountInput}
+              placeholderTextColor={SolanaColors.text.tertiary}
+            />
+            <TouchableOpacity
+              style={styles.maxButton}
+              onPress={handleMaxAmount}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.maxButtonText}>MAX</Text>
+            </TouchableOpacity>
+          </View>
 
-        {/* Token Selector */}
-        {renderTokenSelector()}
+          {/* USD Conversion */}
+          <Text style={styles.usdConversion}>
+            ≈ ${getUSDAmount().toFixed(2)} USD
+          </Text>
 
-        {/* Amount Input */}
-        {renderAmountInput()}
+          {/* Error Message */}
+          {isInsufficientBalance() && (
+            <Text style={styles.errorText}>Insufficient balance</Text>
+          )}
+        </View>
 
-        {/* Payment Summary */}
-        {renderPaymentSummary()}
+        {/* Token Selection */}
+        <View style={styles.tokenSection}>
+          <Text style={styles.sectionTitle}>Pay with</Text>
+          <View style={styles.tokenSelector}>
+            <TouchableOpacity
+              style={[
+                styles.tokenCard,
+                selectedToken === "SOL" && styles.tokenCardSelected,
+              ]}
+              onPress={() => setSelectedToken("SOL")}
+              activeOpacity={0.7}
+            >
+              <View style={styles.tokenHeader}>
+                <Text style={styles.tokenSymbol}>◎</Text>
+                <Text style={styles.tokenName}>SOL</Text>
+              </View>
+              <Text style={styles.tokenBalance}>
+                {balance.sol.toFixed(4)} available
+              </Text>
+            </TouchableOpacity>
 
-        {/* Pay Button */}
+            <TouchableOpacity
+              style={[
+                styles.tokenCard,
+                selectedToken === "USDC" && styles.tokenCardSelected,
+              ]}
+              onPress={() => setSelectedToken("USDC")}
+              activeOpacity={0.7}
+            >
+              <View style={styles.tokenHeader}>
+                <Text style={styles.tokenSymbol}>$</Text>
+                <Text style={styles.tokenName}>USDC</Text>
+              </View>
+              <Text style={styles.tokenBalance}>
+                {balance.usdc.toFixed(2)} available
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Summary */}
+        <View style={styles.summarySection}>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Total</Text>
+            <View style={styles.summaryValue}>
+              <Text style={styles.summaryAmount}>
+                {amount || "0.00"} {selectedToken}
+              </Text>
+              <Text style={styles.summaryUsd}>
+                ${getUSDAmount().toFixed(2)} USD
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* Pay Button */}
+      <View
+        style={[
+          styles.buttonContainer,
+          {
+            paddingBottom: Math.max(insets.bottom + Spacing.xl, Spacing["3xl"]),
+          },
+        ]}
+      >
         <Button
-          title={processing ? "Processing..." : "Pay Now"}
+          title={
+            processing
+              ? "Processing..."
+              : amount && parseFloat(amount) > 0
+              ? `Pay ${amount} ${selectedToken}`
+              : "Enter Amount"
+          }
           onPress={handlePayment}
+          variant="primary"
           disabled={
             processing ||
             !amount ||
             parseFloat(amount) <= 0 ||
-            isInsufficientBalance()
+            isInsufficientBalance() ||
+            balance.loading
           }
           loading={processing}
-          size="large"
-          fullWidth
-          style={styles.payButton}
         />
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 };
@@ -472,21 +428,15 @@ const styles = StyleSheet.create({
     backgroundColor: SolanaColors.background.primary,
   },
 
-  scrollView: {
-    flex: 1,
-  },
-
-  scrollContent: {
-    paddingHorizontal: Spacing.layout.screenPadding,
-    paddingBottom: Spacing["2xl"],
-  },
-
   // Header
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    paddingHorizontal: Spacing.layout.screenPadding,
     paddingVertical: Spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: SolanaColors.border.secondary,
   },
 
   backButton: {
@@ -498,54 +448,49 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  backButtonText: {
-    color: SolanaColors.text.primary,
-    fontSize: 20,
-    fontWeight: Typography.fontWeight.medium,
-  },
-
   headerTitle: {
     fontSize: Typography.fontSize.xl,
     fontWeight: Typography.fontWeight.bold,
     color: SolanaColors.text.primary,
   },
 
-  placeholder: {
+  headerSpacer: {
     width: 40,
   },
 
-  // Merchant Card
-  merchantCard: {
-    marginBottom: Spacing.lg,
-    padding: Spacing.xl,
+  // Content
+  content: {
+    flex: 1,
+    paddingHorizontal: Spacing.layout.screenPadding,
+    paddingTop: Spacing.xl,
   },
 
-  merchantHeader: {
+  // Merchant Section
+  merchantSection: {
     flexDirection: "row",
     alignItems: "center",
+    backgroundColor: SolanaColors.background.card,
+    padding: Spacing.lg,
+    borderRadius: Spacing.borderRadius.lg,
+    marginBottom: Spacing.xl,
   },
 
   merchantIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: SolanaColors.primary,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: `${SolanaColors.primary}20`,
     justifyContent: "center",
     alignItems: "center",
     marginRight: Spacing.lg,
   },
 
-  merchantIconText: {
-    fontSize: 28,
-    color: SolanaColors.white,
-  },
-
-  merchantInfo: {
+  merchantDetails: {
     flex: 1,
   },
 
   merchantName: {
-    fontSize: Typography.fontSize.xl,
+    fontSize: Typography.fontSize.lg,
     fontWeight: Typography.fontWeight.bold,
     color: SolanaColors.text.primary,
     marginBottom: Spacing.xs,
@@ -553,69 +498,122 @@ const styles = StyleSheet.create({
 
   merchantCategory: {
     fontSize: Typography.fontSize.base,
-    color: SolanaColors.primary,
-    fontWeight: Typography.fontWeight.medium,
-    marginBottom: Spacing.xs,
-  },
-
-  merchantAddress: {
-    fontSize: Typography.fontSize.sm,
     color: SolanaColors.text.secondary,
   },
 
-  // Section styling
+  // Amount Section
+  amountSection: {
+    marginBottom: Spacing.xl,
+  },
+
   sectionTitle: {
     fontSize: Typography.fontSize.lg,
-    fontWeight: Typography.fontWeight.bold,
+    fontWeight: Typography.fontWeight.semibold,
     color: SolanaColors.text.primary,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
 
-  // Token Card
-  tokenCard: {
-    marginBottom: Spacing.lg,
-    padding: Spacing.xl,
-  },
-
-  tokenOptions: {
-    gap: Spacing.md,
-  },
-
-  tokenOption: {
+  amountInputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    padding: Spacing.lg,
+    backgroundColor: SolanaColors.background.card,
     borderRadius: Spacing.borderRadius.lg,
     borderWidth: 2,
     borderColor: SolanaColors.border.primary,
-    backgroundColor: SolanaColors.background.secondary,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.lg,
+    marginBottom: Spacing.sm,
+    minHeight: 60,
   },
 
-  tokenOptionSelected: {
-    borderColor: SolanaColors.primary,
-    backgroundColor: SolanaColors.primary + "10",
+  currencySymbol: {
+    fontSize: Typography.fontSize["2xl"],
+    fontWeight: Typography.fontWeight.bold,
+    color: SolanaColors.primary,
+    marginRight: Spacing.sm,
   },
 
-  tokenSymbol: {
-    fontSize: 24,
-    marginRight: Spacing.lg,
-    width: 32,
+  amountInput: {
+    flex: 1,
+    fontSize: Typography.fontSize["2xl"],
+    fontWeight: Typography.fontWeight.bold,
+    color: SolanaColors.text.primary,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.xs,
+    margin: 0,
+    backgroundColor: "transparent",
+    borderWidth: 0,
+    textAlign: "left",
+  },
+
+  maxButton: {
+    backgroundColor: SolanaColors.primary,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: Spacing.borderRadius.md,
+  },
+
+  maxButtonText: {
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.bold,
+    color: SolanaColors.text.inverse,
+  },
+
+  usdConversion: {
+    fontSize: Typography.fontSize.lg,
+    color: SolanaColors.text.secondary,
+    textAlign: "center",
+    marginBottom: Spacing.sm,
+  },
+
+  errorText: {
+    fontSize: Typography.fontSize.base,
+    color: SolanaColors.status.error,
+    fontWeight: Typography.fontWeight.medium,
     textAlign: "center",
   },
 
-  tokenInfo: {
+  // Token Section
+  tokenSection: {
+    marginBottom: Spacing.xl,
+  },
+
+  tokenSelector: {
+    flexDirection: "row",
+    gap: Spacing.md,
+  },
+
+  tokenCard: {
     flex: 1,
+    backgroundColor: SolanaColors.background.card,
+    borderRadius: Spacing.borderRadius.lg,
+    borderWidth: 2,
+    borderColor: SolanaColors.border.primary,
+    padding: Spacing.lg,
+  },
+
+  tokenCardSelected: {
+    borderColor: SolanaColors.primary,
+    backgroundColor: `${SolanaColors.primary}10`,
+  },
+
+  tokenHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing.sm,
+  },
+
+  tokenSymbol: {
+    fontSize: Typography.fontSize.xl,
+    fontWeight: Typography.fontWeight.bold,
+    color: SolanaColors.primary,
+    marginRight: Spacing.sm,
   },
 
   tokenName: {
     fontSize: Typography.fontSize.lg,
     fontWeight: Typography.fontWeight.bold,
     color: SolanaColors.text.primary,
-    marginBottom: Spacing.xs,
-  },
-
-  tokenNameSelected: {
-    color: SolanaColors.primary,
   },
 
   tokenBalance: {
@@ -623,137 +621,48 @@ const styles = StyleSheet.create({
     color: SolanaColors.text.secondary,
   },
 
-  tokenBalanceSelected: {
-    color: SolanaColors.primary,
-  },
-
-  tokenRadio: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: SolanaColors.border.primary,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  tokenRadioSelected: {
-    borderColor: SolanaColors.primary,
-  },
-
-  tokenRadioDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: SolanaColors.primary,
-  },
-
-  // Amount Card
-  amountCard: {
-    marginBottom: Spacing.lg,
-    padding: Spacing.xl,
-  },
-
-  amountInputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: Spacing.lg,
-  },
-
-  amountInput: {
-    flex: 1,
-    marginRight: Spacing.md,
-    marginBottom: 0,
-  },
-
-  maxButton: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    backgroundColor: SolanaColors.primary,
-    borderRadius: Spacing.borderRadius.md,
-  },
-
-  maxButtonText: {
-    color: SolanaColors.white,
-    fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.bold,
-  },
-
-  amountDetails: {
-    gap: Spacing.md,
-  },
-
-  amountRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-
-  amountLabel: {
-    fontSize: Typography.fontSize.base,
-    color: SolanaColors.text.secondary,
-  },
-
-  amountValue: {
-    fontSize: Typography.fontSize.base,
-    fontWeight: Typography.fontWeight.semibold,
-    color: SolanaColors.text.primary,
-  },
-
-  errorText: {
-    fontSize: Typography.fontSize.sm,
-    color: SolanaColors.status.error,
-    fontWeight: Typography.fontWeight.medium,
-    textAlign: "center",
-    marginTop: Spacing.sm,
-  },
-
-  // Summary Card
-  summaryCard: {
-    marginBottom: Spacing.lg,
-    padding: Spacing.xl,
+  // Summary Section
+  summarySection: {
+    backgroundColor: SolanaColors.background.card,
+    borderRadius: Spacing.borderRadius.lg,
+    padding: Spacing.lg,
+    marginBottom: Spacing["5xl"],
   },
 
   summaryRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: Spacing.sm,
-  },
-
-  summaryRowTotal: {
-    borderTopWidth: 1,
-    borderTopColor: SolanaColors.border.secondary,
-    marginTop: Spacing.md,
-    paddingTop: Spacing.lg,
   },
 
   summaryLabel: {
-    fontSize: Typography.fontSize.base,
-    color: SolanaColors.text.secondary,
+    fontSize: Typography.fontSize.lg,
+    fontWeight: Typography.fontWeight.semibold,
+    color: SolanaColors.text.primary,
   },
 
   summaryValue: {
-    fontSize: Typography.fontSize.base,
-    fontWeight: Typography.fontWeight.medium,
-    color: SolanaColors.text.primary,
+    alignItems: "flex-end",
   },
 
-  summaryLabelTotal: {
-    fontSize: Typography.fontSize.lg,
-    fontWeight: Typography.fontWeight.bold,
-    color: SolanaColors.text.primary,
-  },
-
-  summaryValueTotal: {
+  summaryAmount: {
     fontSize: Typography.fontSize.lg,
     fontWeight: Typography.fontWeight.bold,
     color: SolanaColors.primary,
   },
 
-  // Pay Button
-  payButton: {
-    marginTop: Spacing.lg,
+  summaryUsd: {
+    fontSize: Typography.fontSize.base,
+    color: SolanaColors.text.secondary,
+  },
+
+  // Button Container
+  buttonContainer: {
+    paddingHorizontal: Spacing.layout.screenPadding,
+    paddingTop: Spacing.xl,
+    backgroundColor: SolanaColors.background.primary,
+    borderTopWidth: 1,
+    borderTopColor: SolanaColors.border.secondary,
   },
 
   // Error State

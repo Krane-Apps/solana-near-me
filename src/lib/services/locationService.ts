@@ -12,6 +12,15 @@ class LocationService {
     try {
       logger.info(FILE_NAME, 'Requesting location permission');
       
+      // First check if we already have permission
+      const { status: currentStatus } = await Location.getForegroundPermissionsAsync();
+      if (currentStatus === 'granted') {
+        this.hasPermission = true;
+        logger.info(FILE_NAME, 'Location permission already granted');
+        return true;
+      }
+      
+      // Request permission if not already granted
       const { status } = await Location.requestForegroundPermissionsAsync();
       this.hasPermission = status === 'granted';
       
@@ -151,6 +160,25 @@ class LocationService {
 
   getHasPermission(): boolean {
     return this.hasPermission;
+  }
+
+  async checkLocationPermission(): Promise<boolean> {
+    try {
+      logger.debug(FILE_NAME, 'Checking current location permission status');
+      const { status } = await Location.getForegroundPermissionsAsync();
+      this.hasPermission = status === 'granted';
+      
+      logger.debug(FILE_NAME, 'Current location permission status', {
+        status,
+        granted: this.hasPermission
+      });
+      
+      return this.hasPermission;
+    } catch (error) {
+      logger.error(FILE_NAME, 'Error checking location permission', error);
+      this.hasPermission = false;
+      return false;
+    }
   }
 
   async checkLocationServicesEnabled(): Promise<boolean> {

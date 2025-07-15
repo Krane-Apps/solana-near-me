@@ -67,15 +67,56 @@ Replace `${GOOGLE_MAPS_API_KEY}` in the following files with your actual API key
 **For Production:**
 Use environment variables or secure key management.
 
-### 3. Build and Run
+### 3. Development Build Setup (REQUIRED)
+
+**⚠️ IMPORTANT**: This app uses native modules (Solana Mobile Wallet Adapter, React Native Maps, Firebase) that require a development build. You cannot use Expo Go.
+
+#### Option A: Build Development Build Locally (Recommended)
 
 ```bash
-# Generate native directories
+# Install EAS CLI
+npm install -g @expo/eas-cli
+
+# Login to Expo
+npx eas login
+
+# Configure EAS (if not already done)
+npx eas build:configure
+
+# Build development build for Android
+npx eas build --profile development --platform android
+```
+
+After the build completes:
+1. Download the APK from the Expo dashboard
+2. Install it on your Android device or emulator
+3. The development build will have "NearMe (dev)" name
+
+#### Option B: Local Development Build (Faster for development)
+
+```bash
+# Generate native directories (if not already done)
 npx expo prebuild
 
-# Run on Android (ONLY SUPPORTED PLATFORM)
-npx expo run:android
+# Build and install development build locally
+npx expo run:android --device
 ```
+
+### 4. Running the App
+
+Once you have the development build installed:
+
+```bash
+# Start the development server
+npx expo start --dev-client
+
+# Or if you want to clear cache
+npx expo start --dev-client --clear
+```
+
+**Important**: 
+- Make sure to scan the QR code with the development build app (not Expo Go)
+- The development build app icon will show "NearMe (dev)" or similar
 
 ## 🗺️ App Structure
 
@@ -208,6 +249,28 @@ MIT License - see LICENSE file for details
 
 ### Common Issues
 
+**"No development build installed" Error:**
+```
+CommandError: No development build (com.bluntbrain.NearMe) for this project is installed.
+```
+**Solution:**
+1. You need to create a development build (see Section 3 above)
+2. Cannot use Expo Go due to native modules
+3. Either build locally with `npx expo run:android --device` or use EAS Build
+4. Make sure the development build is installed before running `npx expo start --dev-client`
+
+**Duplicate resources error (app icons):**
+```
+ERROR: Duplicate resources - ic_launcher.webp and ic_launcher.png
+```
+**Solution:**
+```bash
+# Remove duplicate .webp files if you've replaced with .png
+find android/app/src/main/res/mipmap-* -name "*.webp" -delete
+# Clean build cache
+rm -rf android/app/.cxx && rm -rf android/build
+```
+
 **Maps not loading:**
 - Verify Google Maps API key is set correctly
 - Check that Maps SDK for Android is enabled
@@ -223,11 +286,52 @@ MIT License - see LICENSE file for details
 - Clean Expo cache: `npx expo start --clear`
 - Rebuild native: `npx expo prebuild --clean`
 
+**Development build issues:**
+- If build fails, try: `npx expo install --fix`
+- For EAS builds, check your Expo account quota
+- Local builds require Android SDK and proper environment setup
+
+**Metro bundler issues:**
+- Try clearing cache: `npx expo start --dev-client --clear`
+- Reset Metro: `npx expo start --dev-client --reset-cache`
+- Check for conflicting dependencies: `npx expo doctor`
+
+**Metro module not found error:**
+```
+Error: Cannot find module 'metro/src/lib/TerminalReporter'
+```
+**Solution:** Use EAS Build instead of local builds:
+```bash
+npm install -g eas-cli
+eas build --profile development --platform android --local
+```
+
 **Solana Pay issues:**
 - Ensure all new dependencies are installed: `npm install @solana/pay @solana/spl-token`
 - For USDC transactions failing: Check if the recipient has a USDC token account
 - Transaction timeouts: Try increasing the confirmation timeout in the service
 - QR codes not generating: Verify the payment request format and network connectivity
+
+## 📍 Latest Updates
+
+### Map Marker Icon Update
+
+**User Request**: Replace the emoji/text markers on the map with purple vector icon map pins.
+
+**Implementation Completed**:
+- **Replaced Bitcoin Symbol**: Changed from `₿` text symbol to MaterialIcons `location-on` vector icon
+- **Purple Solana Theme**: Used `SolanaColors.primary` (#9945FF) for consistent purple branding
+- **Improved Visibility**: Added text shadow effects for better contrast on the map
+- **Cleaner Design**: Removed circular container background, using clean vector icon directly
+- **Size Optimization**: Set to 32px size for optimal visibility without being too large
+
+**Technical Changes**:
+- Updated `MapScreen.tsx` merchant markers to use `<Icon name="location-on" />`
+- Replaced `styles.marker` and `styles.markerText` with `styles.markerIcon`
+- Added text shadow styling for better map visibility
+- Maintained existing marker press functionality
+
+**Result**: Clean, professional purple map pin markers that match Solana's brand colors and provide better visual consistency across the app.
 
 ## 📞 Support
 

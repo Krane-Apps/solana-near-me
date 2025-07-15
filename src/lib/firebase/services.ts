@@ -16,6 +16,7 @@ import { db, COLLECTIONS } from './config';
 import { Merchant, MerchantQueryOptions, LocationCoords } from '../types';
 import { encodeGeohash, getGeohashRange, calculateDistance } from '../utils/geohash';
 import { logger } from '../utils/logger';
+import { logFirebaseOperation } from '../utils/firebaseMetrics';
 
 // Types - extend merchant with distance for geographic queries
 export interface MerchantWithDistance extends Merchant {
@@ -86,7 +87,12 @@ export const MerchantService = {
     try {
       const merchantsCollection = collection(db, COLLECTIONS.MERCHANTS);
       const snapshot = await getDocs(merchantsCollection);
-      return snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() } as Merchant));
+      const merchants = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() } as Merchant));
+      
+      // Log Firebase operation
+      logFirebaseOperation.read(COLLECTIONS.MERCHANTS, 'getAllMerchants', snapshot.docs.length);
+      
+      return merchants;
     } catch (error) {
       console.error('Error fetching merchants:', error);
       throw error;
@@ -98,6 +104,10 @@ export const MerchantService = {
     try {
       const merchantDoc = doc(db, COLLECTIONS.MERCHANTS, id);
       const docSnap = await getDoc(merchantDoc);
+      
+      // Log Firebase operation
+      logFirebaseOperation.read(COLLECTIONS.MERCHANTS, 'getMerchantById', 1);
+      
       if (docSnap.exists()) {
         return { id: docSnap.id, ...docSnap.data() } as Merchant;
       }

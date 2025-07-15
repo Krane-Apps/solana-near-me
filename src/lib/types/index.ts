@@ -25,6 +25,7 @@ export interface Merchant {
   updatedAt: string;
   contactEmail?: string;
   contactPhone?: string;
+  googleMapsLink?: string; // Google Maps business link for fetching reviews and details
 }
 
 export interface User {

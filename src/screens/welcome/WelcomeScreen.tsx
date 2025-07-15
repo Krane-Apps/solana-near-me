@@ -7,6 +7,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Linking,
+  Image,
 } from "react-native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../../lib/types";
@@ -18,6 +19,7 @@ import {
 } from "../../lib/theme";
 import { Button } from "../../components/ui";
 import Animated, { FadeInDown } from "react-native-reanimated";
+import Icon from "react-native-vector-icons/MaterialIcons";
 
 type WelcomeScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -43,7 +45,11 @@ const WelcomeScreen: React.FC<Props> = ({ navigation }) => {
         <View style={styles.heroSection}>
           <Animated.View entering={FadeInDown.duration(600)}>
             <View style={styles.logoContainer}>
-              <Text style={styles.logoEmoji}>◎</Text>
+              <Image
+                source={require("../../../assets/logo3D.png")}
+                style={styles.logoImage}
+                resizeMode="contain"
+              />
             </View>
           </Animated.View>
           <Animated.Text
@@ -63,48 +69,54 @@ const WelcomeScreen: React.FC<Props> = ({ navigation }) => {
         {/* Features Section */}
         <View style={styles.featuresSection}>
           <Text style={styles.featuresTitle}>Why NearMe?</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.featuresScroll}
-          >
+          <View style={styles.featuresContainer}>
             <Animated.View
               entering={FadeInDown.duration(600).delay(600)}
               style={styles.featureCard}
             >
               <View style={styles.featureIcon}>
-                <Text style={styles.featureEmoji}>🗺️</Text>
+                <Icon
+                  name="location-on"
+                  size={28}
+                  color={SolanaColors.primary}
+                />
               </View>
-              <Text style={styles.featureTitle}>Discover Nearby</Text>
-              <Text style={styles.featureDescription}>
-                Find crypto-friendly merchants around you
-              </Text>
+              <View style={styles.featureContent}>
+                <Text style={styles.featureTitle}>Discover Nearby</Text>
+                <Text style={styles.featureDescription}>
+                  Find crypto-friendly merchants around you
+                </Text>
+              </View>
             </Animated.View>
             <Animated.View
               entering={FadeInDown.duration(600).delay(800)}
               style={styles.featureCard}
             >
               <View style={styles.featureIcon}>
-                <Text style={styles.featureEmoji}>⚡</Text>
+                <Icon name="flash-on" size={28} color={SolanaColors.primary} />
               </View>
-              <Text style={styles.featureTitle}>Fast Payments</Text>
-              <Text style={styles.featureDescription}>
-                Pay with SOL or USDC in seconds
-              </Text>
+              <View style={styles.featureContent}>
+                <Text style={styles.featureTitle}>Fast Payments</Text>
+                <Text style={styles.featureDescription}>
+                  Pay with SOL or USDC in seconds
+                </Text>
+              </View>
             </Animated.View>
             <Animated.View
               entering={FadeInDown.duration(600).delay(1000)}
               style={styles.featureCard}
             >
               <View style={styles.featureIcon}>
-                <Text style={styles.featureEmoji}>🏆</Text>
+                <Icon name="stars" size={28} color={SolanaColors.primary} />
               </View>
-              <Text style={styles.featureTitle}>Earn Rewards</Text>
-              <Text style={styles.featureDescription}>
-                Get SOL cashback and NFT badges
-              </Text>
+              <View style={styles.featureContent}>
+                <Text style={styles.featureTitle}>Earn Rewards</Text>
+                <Text style={styles.featureDescription}>
+                  Get SOL cashback and NFT badges
+                </Text>
+              </View>
             </Animated.View>
-          </ScrollView>
+          </View>
         </View>
 
         {/* CTA Section */}
@@ -145,7 +157,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingTop: Spacing["6xl"],
     paddingBottom: Spacing["4xl"],
-    backgroundColor: SolanaColors.primary,
+    backgroundColor: SolanaColors.background.secondary,
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
   },
@@ -153,26 +165,24 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: SolanaColors.background.primary,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: Spacing["2xl"],
-    ...createShadow(12),
   },
-  logoEmoji: {
-    fontSize: 64,
-    color: SolanaColors.primary,
+  logoImage: {
+    width: 240,
+    height: 240,
   },
   title: {
     fontSize: Typography.fontSize["4xl"],
     fontWeight: Typography.fontWeight.bold,
-    color: SolanaColors.white,
+    color: SolanaColors.secondary,
     textAlign: "center",
     marginBottom: Spacing.md,
   },
   subtitle: {
     fontSize: Typography.fontSize.lg,
-    color: SolanaColors.white,
+    color: SolanaColors.text.secondary,
     textAlign: "center",
     maxWidth: "80%",
     opacity: 0.9,
@@ -189,22 +199,17 @@ const styles = StyleSheet.create({
     color: SolanaColors.text.primary,
     marginBottom: Spacing.lg,
   },
-  featuresScroll: {
-    marginHorizontal: -Spacing.layout.screenPadding,
-    paddingHorizontal: Spacing.layout.screenPadding,
+  featuresContainer: {
+    gap: 0, // Remove gap as we use marginBottom
   },
   featureCard: {
-    width: 160,
+    flexDirection: "row", // Changed to row for horizontal layout
+    alignItems: "center",
     backgroundColor: SolanaColors.background.card,
     borderRadius: Spacing.borderRadius.xl,
     padding: Spacing.lg,
-    alignItems: "center",
-    marginRight: Spacing.lg,
+    marginBottom: Spacing.lg, // Added margin between stacked cards
     ...createShadow(4),
-  },
-  feature: {
-    alignItems: "center",
-    marginBottom: Spacing["3xl"],
   },
 
   featureIcon: {
@@ -214,11 +219,11 @@ const styles = StyleSheet.create({
     backgroundColor: SolanaColors.background.secondary,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: Spacing.md,
+    marginRight: Spacing.lg, // Added margin between icon and content
   },
 
-  featureEmoji: {
-    fontSize: 28,
+  featureContent: {
+    flex: 1, // Allows content to take available space
   },
 
   featureTitle: {
@@ -226,13 +231,13 @@ const styles = StyleSheet.create({
     fontWeight: Typography.fontWeight.semibold,
     color: SolanaColors.text.primary,
     marginBottom: Spacing.xs,
-    textAlign: "center",
+    textAlign: "left", // Align text to the left
   },
 
   featureDescription: {
     fontSize: Typography.fontSize.sm,
     color: SolanaColors.text.secondary,
-    textAlign: "center",
+    textAlign: "left", // Align text to the left
   },
 
   // CTA Section

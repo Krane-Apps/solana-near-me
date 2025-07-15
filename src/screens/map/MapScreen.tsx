@@ -32,7 +32,10 @@ import { useAuthorization } from "../../providers/AppProviders";
 import { locationService } from "../../lib/services/locationService";
 import { Merchant, LocationCoords } from "../../lib/types";
 import { UI_CONSTANTS } from "../../lib/utils/constants";
+import { logger } from "../../lib/utils/logger";
 import Icon from "react-native-vector-icons/MaterialIcons";
+
+const FILE_NAME = "MapScreen.tsx";
 
 type MapScreenNavigationProp = StackNavigationProp<RootStackParamList, "Map">;
 
@@ -61,6 +64,8 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
   );
   const [locationLoading, setLocationLoading] = useState(false);
   const [isMapReady, setIsMapReady] = useState(false);
+  const [hasCheckedLocationOnMount, setHasCheckedLocationOnMount] =
+    useState(false);
   const mapRef = useRef<MapView>(null);
   const insets = useSafeAreaInsets();
 
@@ -69,7 +74,7 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
 
   // Debug log for authorization changes (should not affect map)
   React.useEffect(() => {
-    console.log("🔐 Authorization changed in MapScreen:", {
+    logger.debug(FILE_NAME, "Authorization changed in MapScreen", {
       hasAuth: !!authorization,
       hasAccount: !!authorization?.selectedAccount,
       currentMapRegion: persistedMapState.mapRegion,
@@ -99,27 +104,139 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
     seedDataIfNeeded();
   }, []);
 
-  // Initialize map to Bangalore if not already initialized
+  // Check location permission and get user location on mount
+  React.useEffect(() => {
+    const checkLocationAndPermissions = async () => {
+      if (hasCheckedLocationOnMount) return;
+
+      logger.info(
+        FILE_NAME,
+        "Checking location permissions and getting user location"
+      );
+      setHasCheckedLocationOnMount(true);
+
+      try {
+        // Check if location services are enabled first
+        const servicesEnabled =
+          await locationService.checkLocationServicesEnabled();
+        if (!servicesEnabled) {
+          logger.warn(
+            FILE_NAME,
+            "Location services disabled, redirecting to Dashboard"
+          );
+          showMessage({
+            message: "Location Services Disabled",
+            description: "Please enable location services to use the map",
+            type: "warning",
+            duration: 3000,
+          });
+          navigation.replace("Main"); // This will show Dashboard tab by default
+          return;
+        }
+
+        // Request location permission
+        const hasPermission = await locationService.requestLocationPermission();
+        if (!hasPermission) {
+          logger.warn(
+            FILE_NAME,
+            "Location permission denied, redirecting to Dashboard"
+          );
+          showMessage({
+            message: "Location Permission Required",
+            description:
+              "Map requires location access. Redirecting to Dashboard.",
+            type: "warning",
+            duration: 3000,
+          });
+          navigation.replace("Main"); // This will show Dashboard tab by default
+          return;
+        }
+
+        // Get user location
+        logger.info(FILE_NAME, "Getting user location to focus map");
+        setLocationLoading(true);
+        const location = await locationService.getCurrentLocation();
+
+        if (location) {
+          logger.info(FILE_NAME, "Got user location, focusing map", location);
+          setUserLocation(location);
+          persistedMapState.userLocation = location;
+          persistedMapState.lastLocationUpdate = Date.now();
+
+          // Focus map on user location
+          const userRegion = {
+            latitude: location.latitude,
+            longitude: location.longitude,
+            latitudeDelta: 0.05,
+            longitudeDelta: 0.05,
+          };
+
+          setMapRegion(userRegion);
+          persistedMapState.mapRegion = userRegion;
+
+          // Animate to user location if map is ready
+          if (isMapReady && mapRef.current) {
+            mapRef.current.animateToRegion(userRegion, 1000);
+          }
+
+          showMessage({
+            message: "Location Found",
+            description: "Map focused on your current location",
+            type: "success",
+            duration: 2000,
+          });
+        } else {
+          throw new Error("Location not available");
+        }
+      } catch (error) {
+        logger.error(FILE_NAME, "Failed to get user location", error);
+        showMessage({
+          message: "Location Unavailable",
+          description: "Could not get your location. Redirecting to Dashboard.",
+          type: "warning",
+          duration: 3000,
+        });
+        navigation.replace("Main"); // This will show Dashboard tab by default
+      } finally {
+        setLocationLoading(false);
+      }
+    };
+
+    checkLocationAndPermissions();
+  }, [hasCheckedLocationOnMount, isMapReady, navigation]);
+
+  // Animate to user location when map becomes ready and we have location
+  React.useEffect(() => {
+    if (
+      isMapReady &&
+      userLocation &&
+      mapRef.current &&
+      persistedMapState.mapRegion
+    ) {
+      logger.debug(FILE_NAME, "Map ready, animating to user location");
+      mapRef.current.animateToRegion(persistedMapState.mapRegion, 1000);
+    }
+  }, [isMapReady, userLocation]);
+
+  // Initialize map to user location or fallback to Bangalore
   React.useEffect(() => {
     if (!persistedMapState.hasInitialized && isMapReady && mapRef.current) {
-      console.log("🗺️ Initializing map to Bangalore coordinates");
-      const bangaloreRegion = {
+      logger.info(FILE_NAME, "Initializing map");
+
+      const regionToUse = persistedMapState.mapRegion || {
         latitude: 12.9716,
         longitude: 77.5946,
         latitudeDelta: 0.1,
         longitudeDelta: 0.1,
       };
 
-      // Set initial region to Bangalore
+      // Set initial region
       if (!persistedMapState.mapRegion) {
-        persistedMapState.mapRegion = bangaloreRegion;
-        setMapRegion(bangaloreRegion);
+        persistedMapState.mapRegion = regionToUse;
+        setMapRegion(regionToUse);
       }
 
-      mapRef.current.animateToRegion(
-        persistedMapState.mapRegion || bangaloreRegion,
-        1000
-      );
+      mapRef.current.animateToRegion(regionToUse, 1000);
       persistedMapState.hasInitialized = true;
     }
   }, [isMapReady]);
@@ -141,7 +258,7 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
       Math.abs(region.latitude - currentRegion.latitude) > 0.001 ||
       Math.abs(region.longitude - currentRegion.longitude) > 0.001
     ) {
-      console.log("📍 Map region updated:", region);
+      logger.debug(FILE_NAME, "Map region updated", region);
       persistedMapState.mapRegion = region;
       setMapRegion(region);
     }
@@ -158,19 +275,19 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
       persistedMapState.userLocation &&
       now - persistedMapState.lastLocationUpdate < LOCATION_CACHE_DURATION
     ) {
-      console.log("📍 Using cached user location");
+      logger.debug(FILE_NAME, "Using cached user location");
       setUserLocation(persistedMapState.userLocation);
       return persistedMapState.userLocation;
     }
 
     try {
       setLocationLoading(true);
-      console.log("📍 Fetching fresh user location");
+      logger.info(FILE_NAME, "Fetching fresh user location");
 
       // This will request permission if not already granted
       const location = await locationService.getCurrentLocation();
 
-      console.log("📍 Got user location:", location);
+      logger.info(FILE_NAME, "Got user location", location);
 
       // Update both state and persisted data
       setUserLocation(location);
@@ -179,7 +296,7 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
 
       return location;
     } catch (error) {
-      console.log("Could not get user location:", error);
+      logger.error(FILE_NAME, "Could not get user location", error);
 
       // Show user-friendly message for permission issues
       if (
@@ -193,6 +310,12 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
           description: "Please enable location access to find your position",
           type: "warning",
         });
+      } else {
+        showMessage({
+          message: "Location Unavailable",
+          description: "Could not determine your current location",
+          type: "warning",
+        });
       }
     } finally {
       setLocationLoading(false);
@@ -203,39 +326,74 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
   // Focus effect to refresh location when screen comes into focus
   useFocusEffect(
     useCallback(() => {
-      console.log("🗺️ MapScreen focused");
+      logger.info(FILE_NAME, "MapScreen focused");
 
-      // Restore map region if we have one, otherwise use Bangalore
+      // Always prioritize user location when returning to the screen
       if (mapRef.current && isMapReady) {
-        const regionToUse = persistedMapState.mapRegion || {
-          latitude: 12.9716,
-          longitude: 77.5946,
-          latitudeDelta: 0.1,
-          longitudeDelta: 0.1,
-        };
-        console.log("📍 Restoring map region:", regionToUse);
-        mapRef.current.animateToRegion(regionToUse, 500);
+        // Check if we have user location
+        if (userLocation || persistedMapState.userLocation) {
+          const locationToUse = userLocation || persistedMapState.userLocation;
+          if (locationToUse) {
+            logger.debug(
+              FILE_NAME,
+              "Focusing on user location when screen focused",
+              locationToUse
+            );
+
+            const userRegion = {
+              latitude: locationToUse.latitude,
+              longitude: locationToUse.longitude,
+              latitudeDelta: 0.05,
+              longitudeDelta: 0.05,
+            };
+
+            // Always animate to user location with smooth transition
+            mapRef.current.animateToRegion(userRegion, 800);
+            persistedMapState.mapRegion = userRegion;
+            setMapRegion(userRegion);
+
+            // Update state if using persisted location
+            if (!userLocation && persistedMapState.userLocation) {
+              setUserLocation(persistedMapState.userLocation);
+            }
+          }
+        } else {
+          // No user location available, try to get it
+          logger.debug(FILE_NAME, "No user location, attempting to get it");
+          getUserLocation(false).then((location) => {
+            if (location && mapRef.current) {
+              const userRegion = {
+                latitude: location.latitude,
+                longitude: location.longitude,
+                latitudeDelta: 0.05,
+                longitudeDelta: 0.05,
+              };
+              mapRef.current.animateToRegion(userRegion, 800);
+              persistedMapState.mapRegion = userRegion;
+              setMapRegion(userRegion);
+            }
+          });
+        }
       }
 
-      // Try to get location silently (don't center map automatically)
-      if (!persistedMapState.userLocation) {
-        console.log("📍 Getting initial user location");
-        getUserLocation();
+      // Check if location is stale and refresh in background
+      const now = Date.now();
+      const LOCATION_STALE_THRESHOLD = 5 * 60 * 1000; // 5 minutes
+      const isLocationStale =
+        !persistedMapState.lastLocationUpdate ||
+        now - persistedMapState.lastLocationUpdate > LOCATION_STALE_THRESHOLD;
+
+      if (isLocationStale && !locationLoading) {
+        logger.debug(FILE_NAME, "Location is stale, refreshing in background");
+        getUserLocation(true); // Force refresh
       }
-    }, [getUserLocation, isMapReady])
+    }, [isMapReady, userLocation, locationLoading, getUserLocation])
   );
-
-  // Initial location fetch on mount (but don't center map unless user specifically requests)
-  React.useEffect(() => {
-    if (!persistedMapState.userLocation) {
-      getUserLocation();
-    }
-  }, [getUserLocation]);
 
   // Only center map on user location when user explicitly requests it
   const centerOnUserLocation = useCallback(async () => {
     if (userLocation && mapRef.current) {
-      console.log("📍 Centering map on user location");
+      logger.info(FILE_NAME, "Centering map on user location");
       const newRegion = {
         latitude: userLocation.latitude,
         longitude: userLocation.longitude,
@@ -295,12 +453,12 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
 
   const handleMyLocationPress = async () => {
     try {
-      console.log("🎯 User requested location centering");
+      logger.info(FILE_NAME, "User requested location centering");
       setLocationLoading(true);
       const location = await getUserLocation(true); // Force refresh
 
       if (location && mapRef.current) {
-        console.log("📍 Centering map on user location:", location);
+        logger.info(FILE_NAME, "Centering map on user location", location);
         const newRegion = {
           latitude: location.latitude,
           longitude: location.longitude,
@@ -318,7 +476,7 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
           type: "success",
         });
       } else {
-        console.log("❌ Could not get location for centering");
+        logger.warn(FILE_NAME, "Could not get location for centering");
         showMessage({
           message: "Location Unavailable",
           description: "Could not determine your current location",
@@ -326,7 +484,7 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
         });
       }
     } catch (error) {
-      console.log("❌ Location error:", error);
+      logger.error(FILE_NAME, "Location error", error);
       showMessage({
         message: "Location Error",
         description: "Could not get your location",
@@ -423,7 +581,7 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
           followsUserLocation={false}
           userInterfaceStyle="dark"
           onMapReady={() => {
-            console.log("🗺️ Map is ready");
+            logger.info(FILE_NAME, "Map is ready");
             setIsMapReady(true);
           }}
           onRegionChangeComplete={handleRegionChangeComplete}
@@ -448,9 +606,12 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
               onPress={() => handleMarkerPress(merchant)}
             >
               <View style={styles.markerContainer}>
-                <View style={styles.marker}>
-                  <Text style={styles.markerText}>₿</Text>
-                </View>
+                <Icon
+                  name="location-on"
+                  size={32}
+                  color={SolanaColors.primary}
+                  style={styles.markerIcon}
+                />
               </View>
             </Marker>
           ))}
@@ -683,29 +844,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  marker: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: SolanaColors.primary,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 3,
-    borderColor: SolanaColors.background.primary,
-    shadowColor: SolanaColors.shadow.medium,
-    shadowOffset: {
+  markerIcon: {
+    textShadowColor: SolanaColors.shadow.dark,
+    textShadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-
-  markerText: {
-    color: SolanaColors.text.primary,
-    fontSize: 18,
-    fontWeight: Typography.fontWeight.bold,
+    textShadowRadius: 4,
   },
 
   userLocationMarker: {
