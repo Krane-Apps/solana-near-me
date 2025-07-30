@@ -1,5 +1,4 @@
-import { MerchantService, AchievementService } from './services';
-import { mockMerchants } from '../data/merchants';
+import { AchievementService } from './services';
 
 // Initial achievements data
 const initialAchievements = [
@@ -59,30 +58,9 @@ const initialAchievements = [
   },
 ];
 
-// Function to seed merchants
-export const seedMerchants = async (): Promise<void> => {
-  try {
-    console.log('🌱 Starting merchant seeding...');
-    
-    for (const merchant of mockMerchants) {
-      // Convert mock merchant to Firebase format
-      const firebaseMerchant = {
-        ...merchant,
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      
-      await MerchantService.addMerchant(firebaseMerchant);
-      console.log(`✅ Seeded merchant: ${merchant.name}`);
-    }
-    
-    console.log(`🎉 Successfully seeded ${mockMerchants.length} merchants!`);
-  } catch (error) {
-    console.error('❌ Error seeding merchants:', error);
-    throw error;
-  }
-};
+// Merchant seeding is no longer needed.
+// Merchants are now loaded from processed_merchants.json via the fallback system.
+// Use the upload scripts to populate Firebase with processed merchant data.
 
 // Function to seed achievements
 export const seedAchievements = async (): Promise<void> => {

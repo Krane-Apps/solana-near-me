@@ -8,12 +8,47 @@ import { AppNavigator } from "./src/navigation/AppNavigator";
 import { AppProviders } from "./src/providers/AppProviders";
 import { locationService } from "./src/lib/services/locationService";
 import { logger } from "./src/lib/utils/logger";
+import { initializeFirebase } from "./src/lib/firebase/config";
+import { runFirebaseDiagnostics } from "./src/lib/utils/firebaseDiagnostics";
+import { LogBox } from "react-native";
+
+LogBox.ignoreAllLogs();
 
 const FILE_NAME = "App.tsx";
 
 export default function App() {
   useEffect(() => {
     logger.info(FILE_NAME, "App starting up");
+
+    // Initialize Firebase first
+    const initializeApp = async () => {
+      try {
+        logger.info(FILE_NAME, "App initialization starting...");
+
+        // Run diagnostics first
+        runFirebaseDiagnostics();
+
+        logger.info(FILE_NAME, "Initializing Firebase...");
+        const firebaseResult = await initializeFirebase();
+
+        if (firebaseResult.success) {
+          logger.info(FILE_NAME, "Firebase initialized successfully");
+        } else {
+          logger.warn(
+            FILE_NAME,
+            "Firebase initialization failed",
+            firebaseResult.error
+          );
+          logger.warn(FILE_NAME, "App will use mock data for development");
+        }
+      } catch (error) {
+        logger.error(
+          FILE_NAME,
+          "Unexpected error during Firebase initialization",
+          error
+        );
+      }
+    };
 
     const requestLocation = async () => {
       try {
@@ -34,7 +69,13 @@ export default function App() {
       }
     };
 
-    requestLocation();
+    // Initialize app components in sequence
+    const initializeAppSequence = async () => {
+      await initializeApp();
+      await requestLocation();
+    };
+
+    initializeAppSequence();
   }, []);
 
   return (

@@ -24,7 +24,57 @@ A React Native mobile application that enables crypto payments at local merchant
 - **Mobile Wallet Adapter** for native wallet integration
 - **React Native Maps** for merchant discovery
 - **React Navigation** for screen management
-- **Firebase** for merchant and transaction data
+- **Firebase Realtime Database** for optimized merchant data (98%+ cost savings)
+
+## 🏗️ Architecture: Optimized Data Flow
+
+Our app uses Firebase Realtime Database for ultra-efficient merchant data access:
+
+```mermaid
+sequenceDiagram
+    participant User as 📱 User
+    participant App as React Native App
+    participant RDB as 🔥 Realtime Database
+    participant Cache as 💾 Local Cache
+    
+    Note over User,Cache: App Launch (First Time)
+    User->>App: Opens NearMe App
+    App->>RDB: Download ALL merchants (1 read)
+    RDB-->>App: 6,993 merchants (4.88MB)
+    App->>Cache: Store merchants locally
+    Note over App: Cost: $0.0006 ✅
+    
+    Note over User,Cache: User Location Available
+    User->>App: Location: Bangalore
+    App->>Cache: Filter nearby merchants
+    Cache-->>App: 8 merchants within 50km
+    Note over App: Time: 14ms ⚡ (No Firebase reads!)
+    App->>User: Show merchants on map
+    
+    Note over User,Cache: User Moves Around
+    User->>App: Moves to new location
+    App->>Cache: Re-filter merchants
+    Cache-->>App: Updated nearby merchants  
+    Note over App: Time: 4ms ⚡ (No Firebase reads!)
+    App->>User: Updated map markers
+    
+    Note over User,Cache: App Restart (Same Day)
+    User->>App: Reopens app
+    App->>Cache: Check cached data
+    Cache-->>App: Valid data (< 24hrs old)
+    Note over App: Firebase reads: 0 🎉
+    App->>User: Instant map display
+```
+
+### 🚀 Performance Benefits:
+
+| Metric | Old Firestore | New Realtime DB | Improvement |
+|--------|---------------|-----------------|-------------|
+| **Firebase Reads** | 6,993 per session | 1 per session | **99.98%** ↓ |
+| **Cost per User** | $0.251748 | $0.0006 | **99.8%** ↓ |
+| **Initial Load** | Multiple requests | 1.5 seconds | **Consistent** |
+| **Filtering** | Server queries | 14ms client-side | **Instant** ⚡ |
+| **Offline Support** | No | Yes | **New feature** |
 
 ## 📱 Prerequisites
 
@@ -118,6 +168,92 @@ npx expo start --dev-client --clear
 - Make sure to scan the QR code with the development build app (not Expo Go)
 - The development build app icon will show "NearMe (dev)" or similar
 
+## 🔨 Build & Install Commands
+
+### Quick Commands
+
+```bash
+# 🚀 One-command build and install (Recommended)
+npm run quick-build
+
+# 📱 Build and install with options
+npm run build-and-install
+
+# 🔄 Rebuild after Firebase changes
+npm run prebuild && npm run quick-build
+```
+
+### Manual Build Process
+
+```bash
+# 1. Clean build (if needed)
+npm run clean
+npm run clean:android
+
+# 2. Generate native code
+npm run prebuild
+
+# 3. Build APK
+npm run build:android
+
+# 4. Install on emulator/device
+npm run install:debug
+```
+
+### Advanced Build Options
+
+```bash
+# Development builds with EAS
+npm run build:dev          # Local development build
+npm run build:dev-cloud     # Cloud development build
+
+# Preview/Production builds
+npm run build:preview       # Preview build
+npm run build:production    # Production build
+
+# Install options
+npm run install:emulator    # Install on emulator
+npm run install:device      # Install on device
+```
+
+### Build Script Options
+
+The `scripts/build-and-install.sh` script supports various options:
+
+```bash
+# Basic usage
+./scripts/build-and-install.sh
+
+# Build types
+./scripts/build-and-install.sh --dev          # Development build
+./scripts/build-and-install.sh --preview      # Preview build
+./scripts/build-and-install.sh --production   # Production build
+
+# Install targets
+./scripts/build-and-install.sh --device       # Install on device
+./scripts/build-and-install.sh --emulator     # Install on emulator
+
+# Options
+./scripts/build-and-install.sh --clean        # Clean build
+./scripts/build-and-install.sh --help         # Show help
+```
+
+### Troubleshooting Builds
+
+```bash
+# Clear everything and rebuild
+npm run clean && npm run quick-build
+
+# Check connected devices
+adb devices
+
+# View app logs
+adb logcat -s ReactNativeJS:V ReactNative:V NearMe:V
+
+# Kill existing app instances
+adb shell am force-stop com.bluntbrain.NearMe
+```
+
 ## 🗺️ App Structure
 
 ```
@@ -195,6 +331,60 @@ const qrCodeURL = await createPaymentURL(paymentRequest);
 - SOL balance tracking
 - Achievement progress
 - NFT badge collection
+
+## 🛠️ Firebase Management Scripts
+
+The app includes powerful scripts for managing merchant data in Firebase Realtime Database:
+
+### Data Processing & Upload
+```bash
+# Process raw merchant data from CryptWerk
+npm run process-merchants
+
+# Upload processed merchants to Realtime Database
+npm run upload-realtime -- --yes
+
+# Test upload with only 10 merchants
+npm run upload-realtime -- --test --yes
+
+# Preview what would be uploaded (dry run)
+npm run upload-realtime -- --dry-run
+```
+
+### Testing & Verification
+```bash
+# Test Realtime Database connection and data
+npm run test-realtime
+
+# Comprehensive performance and integration tests
+npm run test-realtime-integration
+
+# Simulate full app integration flow
+npm run test-app-integration
+```
+
+### Script Options
+- `--help, -h`: Show help message
+- `--force, --yes`: Skip confirmation prompts
+- `--dry-run`: Preview operations without executing
+- `--test`: Use test mode with limited data
+
+### Database Structure
+```
+https://solana-near-me-default-rtdb.asia-southeast1.firebasedatabase.app/
+├── merchants/          # All merchant data (6,993 merchants)
+│   ├── {merchantId}/   # Individual merchant records
+│   │   ├── name
+│   │   ├── category
+│   │   ├── latitude
+│   │   ├── longitude
+│   │   ├── geohash
+│   │   └── googleMapsLink
+└── metadata/           # Upload metadata
+    ├── totalMerchants
+    ├── lastUpdated
+    └── version
+```
 
 ## 🔐 Security Features
 

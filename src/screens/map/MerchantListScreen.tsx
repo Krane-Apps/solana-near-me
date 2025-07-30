@@ -7,19 +7,22 @@ import {
   TouchableOpacity,
   FlatList,
   RefreshControl,
-  ScrollView,
   TextInput,
+  ActivityIndicator,
 } from "react-native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../../lib/types";
 import { SolanaColors, Typography, Spacing } from "../../lib/theme";
 import { Card, Button } from "../../components/ui";
-import { mockMerchants } from "../../lib/data/merchants";
-import { useMerchants } from "../../lib/firebase";
+
 import { locationService } from "../../lib/services/locationService";
 import { UI_CONSTANTS } from "../../lib/utils/constants";
 import { Merchant, LocationCoords } from "../../lib/types";
 import Icon from "react-native-vector-icons/MaterialIcons";
+import { showMessage } from "react-native-flash-message";
+
+// Import processed merchants directly for optimal performance
+import processedMerchantsData from "../../lib/data/processed_merchants.json";
 
 type MerchantListScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -30,21 +33,72 @@ interface Props {
   navigation: MerchantListScreenNavigationProp;
 }
 
+// Process all merchants globally once
+const getAllMerchants = (): Merchant[] => {
+  try {
+    let merchantsArray: Merchant[] = [];
+    if (Array.isArray(processedMerchantsData)) {
+      merchantsArray = processedMerchantsData;
+    } else if (
+      processedMerchantsData &&
+      typeof processedMerchantsData === "object"
+    ) {
+      merchantsArray = (processedMerchantsData as any).merchants || [];
+    }
+
+    return merchantsArray
+      .filter(
+        (merchant: any) =>
+          merchant.latitude &&
+          merchant.longitude &&
+          !isNaN(merchant.latitude) &&
+          !isNaN(merchant.longitude) &&
+          merchant.name
+      )
+      .map((merchant: any) => ({
+        name: merchant.name,
+        latitude: merchant.latitude,
+        longitude: merchant.longitude,
+        category: merchant.category || "Other",
+        address: merchant.address || "",
+        description: merchant.description || "",
+        acceptedTokens: merchant.acceptedTokens || ["SOL"],
+        googleMapsLink: merchant.googleMapsLink || "",
+        id: merchant.id || merchant.name,
+        rating: merchant.rating || 0,
+        // Additional required properties for Merchant interface
+        geopoint: {
+          latitude: merchant.latitude,
+          longitude: merchant.longitude,
+        },
+        geohash: merchant.geohash || "",
+        city: merchant.city || "",
+        walletAddress: merchant.walletAddress || "",
+        featured: merchant.featured || false,
+        verified: merchant.verified || false,
+        profileImage: merchant.profileImage || "",
+        isActive: merchant.isActive || true,
+        isApproved: merchant.isApproved || true,
+        createdAt: merchant.createdAt || new Date(),
+        updatedAt: merchant.updatedAt || new Date(),
+      }));
+  } catch (error) {
+    console.error("Failed to process merchants", error);
+    return [];
+  }
+};
+
+const ALL_MERCHANTS = getAllMerchants();
+
 const MerchantListScreen: React.FC<Props> = ({ navigation }) => {
   const [userLocation, setUserLocation] = useState<LocationCoords | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [displayedCount, setDisplayedCount] = useState(20); // Start with 20 merchants
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  // Firebase hooks
-  const {
-    merchants: firebaseMerchants,
-    loading: merchantsLoading,
-    refetch: refetchMerchants,
-  } = useMerchants();
-
-  // Use Firebase merchants if available, otherwise fallback to mock data
-  const merchants =
-    firebaseMerchants.length > 0 ? firebaseMerchants : mockMerchants;
+  // Use all merchants directly
+  const merchants = ALL_MERCHANTS;
 
   // Get user location on mount
   React.useEffect(() => {
@@ -63,13 +117,13 @@ const MerchantListScreen: React.FC<Props> = ({ navigation }) => {
     getUserLocation();
   }, []);
 
-  // Add distance calculation, search filtering, and sort by proximity
-  const merchantsWithDistance = useMemo(() => {
-    let filteredMerchants = merchants;
+  // Optimized search, filtering, and pagination
+  const { filteredMerchants, displayedMerchants } = useMemo(() => {
+    let filtered = merchants;
 
     // Apply search filter
     if (searchQuery.trim()) {
-      filteredMerchants = merchants.filter(
+      filtered = merchants.filter(
         (merchant) =>
           merchant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           merchant.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -77,39 +131,52 @@ const MerchantListScreen: React.FC<Props> = ({ navigation }) => {
       );
     }
 
-    // Add distance calculation if location is available
-    if (!userLocation) return filteredMerchants;
+    // Add distance calculation and sort if location is available
+    if (userLocation) {
+      filtered = filtered
+        .map((merchant) => ({
+          ...merchant,
+          distance: locationService.calculateDistance(
+            userLocation.latitude,
+            userLocation.longitude,
+            merchant.latitude,
+            merchant.longitude
+          ),
+        }))
+        .sort((a, b) => (a.distance || 0) - (b.distance || 0));
+    }
 
-    return filteredMerchants
-      .map((merchant) => ({
-        ...merchant,
-        distance: locationService.calculateDistance(
-          userLocation.latitude,
-          userLocation.longitude,
-          merchant.latitude,
-          merchant.longitude
-        ),
-      }))
-      .sort((a, b) => (a.distance || 0) - (b.distance || 0));
-  }, [merchants, userLocation, searchQuery]);
+    // Apply pagination - only show displayedCount items
+    const displayed = filtered.slice(0, displayedCount);
+
+    return {
+      filteredMerchants: filtered,
+      displayedMerchants: displayed,
+    };
+  }, [merchants, userLocation, searchQuery, displayedCount]);
 
   const clearSearch = () => {
     setSearchQuery("");
   };
 
   const handleMerchantPress = (merchant: Merchant) => {
-    navigation.navigate("Payment", {
-      merchantId: merchant.id,
-      merchantName: merchant.name,
+    // Show coming soon toast instead of navigating
+    showMessage({
+      message: "Coming Soon! 🚀",
+      description: "Payment feature is under development. Stay tuned!",
+      type: "info",
+      duration: 3000,
+      icon: "info",
     });
   };
 
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await refetchMerchants();
+      // Reset pagination
+      setDisplayedCount(20);
 
-      // Also refresh user location
+      // Refresh user location
       const hasPermission = locationService.getHasPermission();
       if (hasPermission) {
         const location = await locationService.getCurrentLocation();
@@ -120,6 +187,25 @@ const MerchantListScreen: React.FC<Props> = ({ navigation }) => {
     } finally {
       setRefreshing(false);
     }
+  };
+
+  const handleLoadMore = () => {
+    if (
+      isLoadingMore ||
+      displayedMerchants.length >= filteredMerchants.length
+    ) {
+      return;
+    }
+
+    setIsLoadingMore(true);
+
+    // Simulate loading delay for better UX
+    setTimeout(() => {
+      setDisplayedCount((prev) =>
+        Math.min(prev + 20, filteredMerchants.length)
+      );
+      setIsLoadingMore(false);
+    }, 300);
   };
 
   const formatDistance = (distance?: number) => {
@@ -166,12 +252,6 @@ const MerchantListScreen: React.FC<Props> = ({ navigation }) => {
           </View>
         </View>
 
-        {merchant.description && (
-          <Text style={styles.merchantDescription} numberOfLines={2}>
-            {merchant.description}
-          </Text>
-        )}
-
         <View style={styles.merchantFooter}>
           <View style={styles.tokensContainer}>
             <Text style={styles.tokensLabel}>Accepts: </Text>
@@ -182,113 +262,121 @@ const MerchantListScreen: React.FC<Props> = ({ navigation }) => {
               </Text>
             ))}
           </View>
-          <View style={styles.statusContainer}>
-            <View style={styles.statusDot} />
-            <Text style={styles.statusText}>Open</Text>
-          </View>
         </View>
       </TouchableOpacity>
     </Card>
   );
 
+  const renderFooter = () => {
+    if (!isLoadingMore) return null;
+
+    return (
+      <View style={styles.loadingFooter}>
+        <ActivityIndicator size="small" color={SolanaColors.primary} />
+        <Text style={styles.loadingText}>Loading more merchants...</Text>
+      </View>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            colors={[SolanaColors.button.primary]}
-            tintColor={SolanaColors.button.primary}
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.headerContent}>
+          <Text style={styles.merchantsTitle}>All Merchants</Text>
+          <Text style={styles.headerSubtitle}>
+            {filteredMerchants.length} merchants worldwide 🌍
+          </Text>
+        </View>
+      </View>
+
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <View style={styles.searchInputContainer}>
+          <Icon name="search" size={20} color={SolanaColors.text.secondary} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search merchants, categories..."
+            placeholderTextColor={SolanaColors.text.secondary}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            returnKeyType="search"
           />
-        }
-      >
-        {/* Header */}
-
-        {/* Merchants Section */}
-        <View
-          style={[
-            styles.merchantsSection,
-            { paddingBottom: UI_CONSTANTS.BOTTOM_TAB_HEIGHT + Spacing.xl },
-          ]}
-        >
-          <Text style={styles.merchantsTitle}>Nearby Merchants</Text>
-
-          {/* Search Bar */}
-          <View style={styles.searchContainer}>
-            <View style={styles.searchInputContainer}>
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
               <Icon
-                name="search"
+                name="close"
                 size={20}
                 color={SolanaColors.text.secondary}
               />
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Search merchants, categories..."
-                placeholderTextColor={SolanaColors.text.secondary}
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                returnKeyType="search"
-              />
-              {searchQuery.length > 0 && (
-                <TouchableOpacity
-                  onPress={clearSearch}
-                  style={styles.clearButton}
-                >
-                  <Icon
-                    name="close"
-                    size={20}
-                    color={SolanaColors.text.secondary}
-                  />
-                </TouchableOpacity>
-              )}
-            </View>
-          </View>
-          <Text style={styles.merchantsSubtitle}>
-            {merchantsWithDistance.length} merchants nearby
-          </Text>
-
-          {merchantsWithDistance.length > 0 ? (
-            merchantsWithDistance.map((merchant) => (
-              <View key={merchant.id}>
-                {renderMerchantItem({ item: merchant })}
-              </View>
-            ))
-          ) : (
-            <View style={styles.emptyContainer}>
-              <Icon
-                name={searchQuery.trim() ? "search-off" : "store"}
-                size={48}
-                color={SolanaColors.text.secondary}
-              />
-              <Text style={styles.emptyTitle}>
-                {searchQuery.trim() ? "No results found" : "No merchants found"}
-              </Text>
-              <Text style={styles.emptyText}>
-                {searchQuery.trim()
-                  ? `No merchants match "${searchQuery}". Try different keywords.`
-                  : "Check back later or try refreshing the list"}
-              </Text>
-              {searchQuery.trim() ? (
-                <Button
-                  title="Clear Search"
-                  onPress={clearSearch}
-                  variant="outline"
-                  style={styles.refreshButton}
-                />
-              ) : (
-                <Button
-                  title="Refresh"
-                  onPress={handleRefresh}
-                  variant="outline"
-                  style={styles.refreshButton}
-                />
-              )}
-            </View>
+            </TouchableOpacity>
           )}
         </View>
-      </ScrollView>
+      </View>
+
+      {displayedMerchants.length > 0 ? (
+        <FlatList
+          data={displayedMerchants}
+          renderItem={renderMerchantItem}
+          keyExtractor={(item) => item.id}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[
+            styles.listContainer,
+            { paddingBottom: UI_CONSTANTS.BOTTOM_TAB_HEIGHT + Spacing["3xl"] },
+          ]}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              colors={[SolanaColors.button.primary]}
+              tintColor={SolanaColors.button.primary}
+            />
+          }
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.1}
+          ListFooterComponent={renderFooter}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          windowSize={10}
+          initialNumToRender={10}
+          getItemLayout={(data, index) => ({
+            length: 160, // Approximate item height
+            offset: 160 * index,
+            index,
+          })}
+        />
+      ) : (
+        <View style={styles.emptyContainer}>
+          <Icon
+            name={searchQuery.trim() ? "search-off" : "store"}
+            size={48}
+            color={SolanaColors.text.secondary}
+          />
+          <Text style={styles.emptyTitle}>
+            {searchQuery.trim() ? "No results found" : "No merchants found"}
+          </Text>
+          <Text style={styles.emptyText}>
+            {searchQuery.trim()
+              ? `No merchants match "${searchQuery}". Try different keywords.`
+              : "Check back later or try refreshing the list"}
+          </Text>
+          {searchQuery.trim() ? (
+            <Button
+              title="Clear Search"
+              onPress={clearSearch}
+              variant="outline"
+              style={styles.refreshButton}
+            />
+          ) : (
+            <Button
+              title="Refresh"
+              onPress={handleRefresh}
+              variant="outline"
+              style={styles.refreshButton}
+            />
+          )}
+        </View>
+      )}
     </SafeAreaView>
   );
 };
@@ -316,7 +404,7 @@ const styles = StyleSheet.create({
   },
 
   headerSubtitle: {
-    fontSize: Typography.fontSize.base,
+    fontSize: Typography.fontSize.sm,
     color: SolanaColors.text.secondary,
     fontWeight: Typography.fontWeight.regular,
   },
@@ -503,7 +591,7 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.lg,
     fontWeight: Typography.fontWeight.bold,
     color: SolanaColors.text.primary,
-    marginBottom: Spacing.md,
+    marginTop: Spacing.md,
   },
 
   merchantsSubtitle: {
@@ -515,7 +603,32 @@ const styles = StyleSheet.create({
 
   // Search styles
   searchContainer: {
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
+    marginTop: Spacing.md,
+    paddingHorizontal: Spacing.layout.screenPadding,
+  },
+
+  // List container
+  listContainer: {
+    paddingHorizontal: Spacing.layout.screenPadding,
+  },
+
+  // Loading footer
+  loadingFooter: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: Spacing["2xl"],
+    paddingBottom: Spacing["3xl"], // Extra padding to ensure visibility above bottom nav
+    backgroundColor: SolanaColors.background.primary,
+    borderTopWidth: 1,
+    borderTopColor: SolanaColors.border.primary,
+  },
+
+  loadingText: {
+    fontSize: Typography.fontSize.sm,
+    color: SolanaColors.text.secondary,
+    marginLeft: Spacing.sm,
   },
 
   searchInputContainer: {

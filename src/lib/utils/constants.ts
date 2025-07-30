@@ -51,4 +51,7 @@ export const UI_CONSTANTS = {
     HEIGHT: 48,
     SHADOW_OPACITY: 0.15,
   },
-}; 
+};
+
+// Re-export category icons for convenience
+export { CATEGORY_ICONS, getCategoryIcon, getAvailableCategories, CATEGORY_COLORS } from './categoryIcons'; 

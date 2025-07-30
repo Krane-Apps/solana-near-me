@@ -31,15 +31,26 @@ export const useMerchants = () => {
         setLoading(true);
         setError(null);
         
+        logger.info('useMerchants', 'Starting merchant fetch');
+        
         // Small delay to ensure Firebase is ready
         await new Promise(resolve => setTimeout(resolve, FIREBASE_INIT_DELAY));
         
         const data = await MerchantService.getAllMerchants();
         setMerchants(data);
         
+        logger.info('useMerchants', 'Successfully fetched merchants', {
+          count: data.length,
+          firstMerchant: data.length > 0 ? {
+            name: data[0].name,
+            hasCoordinates: !!(data[0].latitude && data[0].longitude)
+          } : null
+        });
+        
         // Log hook usage
         logFirebaseOperation.read('merchants', 'useMerchants', data.length);
       } catch (err) {
+        logger.error('useMerchants', 'Error fetching merchants', err);
         console.error('Error fetching merchants:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch merchants');
       } finally {
@@ -54,9 +65,17 @@ export const useMerchants = () => {
     try {
       setLoading(true);
       setError(null);
+      
+      logger.info('useMerchants', 'Refetching merchants');
+      
       const data = await MerchantService.getAllMerchants();
       setMerchants(data);
+      
+      logger.info('useMerchants', 'Successfully refetched merchants', {
+        count: data.length
+      });
     } catch (err) {
+      logger.error('useMerchants', 'Error refetching merchants', err);
       console.error('Error refetching merchants:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch merchants');
     } finally {

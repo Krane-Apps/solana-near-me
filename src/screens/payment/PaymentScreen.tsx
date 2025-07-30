@@ -25,8 +25,8 @@ import { Button, TextInput } from "../../components/ui";
 import { useAuthorization } from "../../providers/AppProviders";
 import { useWalletBalance } from "../../hooks/useWalletBalance";
 import { useConnection } from "../../hooks/useConnection";
-import { mockMerchants } from "../../lib/data/merchants";
-import { useMerchants } from "../../lib/firebase";
+
+import { useNearbyMerchants } from "../../lib/firebase/useOptimizedMerchants";
 import { EXCHANGE_RATES } from "../../lib/utils/constants";
 import { SolanaPayService } from "../../lib/services/solanaPayService";
 import { PaymentRequest } from "../../lib/types";
@@ -59,8 +59,21 @@ const PaymentScreen: React.FC<Props> = ({ navigation, route }) => {
     authorization?.selectedAccount?.publicKey || null
   );
 
-  // Firebase hooks
-  const { merchants, loading: merchantsLoading } = useMerchants();
+  // Firebase hooks with fallback to processed merchants
+  const {
+    merchants: nearbyMerchants,
+    loading: merchantsLoading,
+    error: merchantsError,
+    dataSource,
+  } = useNearbyMerchants(
+    undefined, // No location filtering needed for payment
+    undefined,
+    10000, // Very large radius
+    10000 // Very high limit to get all merchants
+  );
+
+  // Use the merchants from the hook (includes fallback to processed merchants)
+  const merchants = nearbyMerchants;
 
   // Solana Pay service
   const solanaPayService = useMemo(
@@ -71,10 +84,7 @@ const PaymentScreen: React.FC<Props> = ({ navigation, route }) => {
   // Find merchant
   const merchant = useMemo(() => {
     if (merchantId) {
-      return (
-        merchants.find((m) => m.id === merchantId) ||
-        mockMerchants.find((m) => m.id === merchantId)
-      );
+      return merchants.find((m) => m.id === merchantId);
     }
     return null;
   }, [merchants, merchantId]);

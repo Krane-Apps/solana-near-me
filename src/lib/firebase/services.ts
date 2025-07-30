@@ -84,16 +84,33 @@ const cleanData = (data: any): any => {
 export const MerchantService = {
   // Get all merchants
   async getAllMerchants(): Promise<Merchant[]> {
+    const FILE_NAME = 'MerchantService.getAllMerchants';
+    
     try {
+      logger.info(FILE_NAME, 'Fetching all merchants from Firebase');
+      
       const merchantsCollection = collection(db, COLLECTIONS.MERCHANTS);
       const snapshot = await getDocs(merchantsCollection);
       const merchants = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() } as Merchant));
+      
+      logger.info(FILE_NAME, 'Successfully fetched merchants', {
+        totalDocs: snapshot.docs.length,
+        hasValidMerchants: merchants.filter((m: Merchant) => m.latitude && m.longitude).length,
+        collection: COLLECTIONS.MERCHANTS,
+        firstMerchant: merchants.length > 0 ? {
+          id: merchants[0].id,
+          name: merchants[0].name,
+          lat: merchants[0].latitude,
+          lng: merchants[0].longitude
+        } : null
+      });
       
       // Log Firebase operation
       logFirebaseOperation.read(COLLECTIONS.MERCHANTS, 'getAllMerchants', snapshot.docs.length);
       
       return merchants;
     } catch (error) {
+      logger.error(FILE_NAME, 'Error fetching merchants from Firebase', error);
       console.error('Error fetching merchants:', error);
       throw error;
     }

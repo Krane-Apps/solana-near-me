@@ -17,6 +17,7 @@ export {
 // Firebase hooks
 export {
   useMerchants,
+  useMerchantsNearLocation,
   useUser,
   useUserTransactions,
   useUserRewards,
