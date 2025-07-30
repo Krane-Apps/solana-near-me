@@ -785,14 +785,18 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
                         Directions
                       </Text>
                     </TouchableOpacity>
-                    <View style={styles.payButtonContainer}>
-                      <Button
-                        title="Pay Now"
-                        onPress={handlePayPress}
-                        size="large"
-                        fullWidth
+                    <TouchableOpacity
+                      style={styles.payButton}
+                      onPress={handlePayPress}
+                      activeOpacity={0.7}
+                    >
+                      <Icon
+                        name="payment"
+                        size={20}
+                        color={SolanaColors.white}
                       />
-                    </View>
+                      <Text style={styles.payButtonText}>Pay Now</Text>
+                    </TouchableOpacity>
                   </View>
                 </View>
               </>
@@ -1063,8 +1067,23 @@ const styles = StyleSheet.create({
     fontWeight: Typography.fontWeight.medium,
   },
 
-  payButtonContainer: {
+  payButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: SolanaColors.primary,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderRadius: Spacing.borderRadius.lg,
+    gap: Spacing.sm,
+    minWidth: 100,
     flex: 1,
+  },
+
+  payButtonText: {
+    color: SolanaColors.white,
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.medium,
   },
 });
 
