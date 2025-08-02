@@ -133,7 +133,7 @@ export type RootStackParamList = {
     timestamp: string;
     rewardAmount?: number;
   };
-  Reward: undefined;
+  Referral: undefined;
   MerchantRegistration: undefined;
   UserProfile: undefined;
 };

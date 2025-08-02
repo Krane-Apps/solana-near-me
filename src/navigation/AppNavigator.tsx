@@ -17,8 +17,7 @@ import { MapScreen, MerchantListScreen } from "../screens/map";
 import { PaymentScreen, PaymentSuccessScreen } from "../screens/payment";
 import MerchantRegistrationScreen from "../screens/merchant";
 import { UserProfileScreen } from "../screens/profile";
-import RewardScreen from "../screens/rewards";
-import OptionsScreen from "../screens/options";
+import { OptionsScreen, ReferralScreen } from "../screens/options";
 
 const FILE_NAME = "AppNavigator.tsx";
 
@@ -147,7 +146,7 @@ export const AppNavigator: React.FC = () => {
         <Stack.Screen name="Main" component={MainTabNavigator} />
         <Stack.Screen name="Payment" component={PaymentScreen} />
         <Stack.Screen name="PaymentSuccess" component={PaymentSuccessScreen} />
-        <Stack.Screen name="Reward" component={RewardScreen} />
+        <Stack.Screen name="Referral" component={ReferralScreen} />
         <Stack.Screen
           name="MerchantRegistration"
           component={MerchantRegistrationScreen}

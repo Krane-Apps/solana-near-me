@@ -31,32 +31,9 @@ export const UserProfileScreen: React.FC = () => {
   // MWA hooks
   const { authorization, disconnect } = useAuthorization();
 
-  // Add comprehensive logging for authorization state
-  useEffect(() => {
-    console.log("🔍 UserProfileScreen Debug Logs:");
-    console.log("- authorization object:", authorization);
-    console.log("- authorization exists:", !!authorization);
-    console.log("- selectedAccount:", authorization?.selectedAccount);
-    console.log("- selectedAccount exists:", !!authorization?.selectedAccount);
-    console.log(
-      "- selectedAccount publicKey:",
-      authorization?.selectedAccount?.publicKey?.toString()
-    );
-    console.log("- authToken:", authorization?.authToken);
-    console.log("- accounts array:", authorization?.accounts);
-    console.log("- accounts length:", authorization?.accounts?.length);
-  }, [authorization]);
-
   // Get wallet address from authorization
   const walletAddress = authorization?.selectedAccount?.publicKey.toString();
   const walletPublicKey = authorization?.selectedAccount?.publicKey || null;
-
-  // Log wallet address changes
-  useEffect(() => {
-    console.log("💳 Wallet Address Update:");
-    console.log("- walletAddress:", walletAddress);
-    console.log("- walletAddress exists:", !!walletAddress);
-  }, [walletAddress]);
 
   const {
     user,
@@ -71,39 +48,16 @@ export const UserProfileScreen: React.FC = () => {
   const { balance: walletBalance, refetch: refetchBalance } =
     useWalletBalance(walletPublicKey);
 
-  // Log user and transactions data
-  useEffect(() => {
-    console.log("👤 User Data:");
-    console.log("- user:", user);
-    console.log("- userLoading:", userLoading);
-    console.log("- transactions:", transactions);
-    console.log("- transactionsLoading:", transactionsLoading);
-  }, [user, userLoading, transactions, transactionsLoading]);
-
-  // Log wallet balance data
-  useEffect(() => {
-    console.log("💰 Wallet Balance Data:");
-    console.log("- walletBalance:", walletBalance);
-    console.log("- SOL balance:", walletBalance.sol);
-    console.log("- SOL USD value:", walletBalance.solUSD);
-    console.log("- USDC balance:", walletBalance.usdc);
-    console.log("- balance loading:", walletBalance.loading);
-    console.log("- balance error:", walletBalance.error);
-  }, [walletBalance]);
-
   const onRefresh = async () => {
-    console.log("🔄 Refreshing user profile data");
     setRefreshing(true);
     await Promise.all([refetchUser(), refetchTransactions(), refetchBalance()]);
     setRefreshing(false);
-    console.log("✅ Refresh completed");
   };
 
   const handleDisconnectWallet = async () => {
-    console.log("🔌 Disconnecting wallet");
     try {
       await disconnect();
-      console.log("✅ Wallet disconnected successfully");
+
       showMessage({
         message: "Wallet Disconnected",
         description: "Your wallet has been successfully disconnected",
@@ -132,12 +86,7 @@ export const UserProfileScreen: React.FC = () => {
 
   const recentTransactions = transactions.slice(0, 5);
 
-  // Log rendering decisions
   const isWalletConnected = !!authorization?.selectedAccount;
-  console.log("🎨 UserProfileScreen Rendering:");
-  console.log("- isWalletConnected:", isWalletConnected);
-  console.log("- Will show connect wallet section:", !isWalletConnected);
-  console.log("- Will show wallet info section:", isWalletConnected);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -151,10 +100,7 @@ export const UserProfileScreen: React.FC = () => {
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => {
-              console.log("⬅️ Back button pressed");
-              navigation.goBack();
-            }}
+            onPress={() => navigation.goBack()}
           >
             <Icon
               name="arrow-back"
@@ -179,10 +125,7 @@ export const UserProfileScreen: React.FC = () => {
               Connect your Solana wallet to view your profile and transaction
               history.
             </Text>
-            <Text style={styles.debugInfo}>
-              Debug: No wallet connected - authorization.selectedAccount is
-              null/undefined
-            </Text>
+
             <ConnectWalletButton />
             <AccountInfo />
           </Card>
@@ -190,10 +133,7 @@ export const UserProfileScreen: React.FC = () => {
           /* Wallet Info Card */
           <Card style={styles.walletCard}>
             <Text style={styles.sectionTitle}>Wallet Information</Text>
-            <Text style={styles.debugInfo}>
-              Debug: Wallet connected - showing wallet info for{" "}
-              {formatWalletAddress(walletAddress || "")}
-            </Text>
+
             <View style={styles.walletInfo}>
               <Text style={styles.walletLabel}>Address</Text>
               <Text style={styles.walletAddress}>
@@ -273,10 +213,7 @@ export const UserProfileScreen: React.FC = () => {
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Recent Transactions</Text>
             <TouchableOpacity
-              onPress={() => {
-                console.log("📊 View All transactions pressed");
-                navigation.navigate("Reward" as never);
-              }}
+              onPress={() => navigation.navigate("Reward" as never)}
             >
               <Text style={styles.viewAllText}>View All</Text>
             </TouchableOpacity>
@@ -359,16 +296,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: Spacing.lg,
   },
-  debugInfo: {
-    fontSize: Typography.fontSize.xs,
-    color: SolanaColors.text.secondary,
-    fontStyle: "italic",
-    marginBottom: Spacing.md,
-    padding: Spacing.sm,
-    backgroundColor: SolanaColors.background.secondary,
-    borderRadius: 4,
-    fontFamily: "monospace",
-  },
+
   sectionTitle: {
     fontSize: Typography.fontSize.lg,
     fontWeight: Typography.fontWeight.bold,

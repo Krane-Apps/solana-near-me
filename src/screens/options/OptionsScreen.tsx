@@ -44,8 +44,8 @@ const OptionsScreen: React.FC<Props> = ({ navigation }) => {
     navigation.navigate("UserProfile");
   };
 
-  const handleRewards = () => {
-    navigation.navigate("Reward");
+  const handleReferrals = () => {
+    navigation.navigate("Referral");
   };
 
   const handleFeedback = () => {
@@ -71,11 +71,11 @@ const OptionsScreen: React.FC<Props> = ({ navigation }) => {
       showArrow: true,
     },
     {
-      id: "rewards",
-      title: "Rewards",
-      description: "View your earned rewards and bonuses",
-      icon: "card-giftcard",
-      onPress: handleRewards,
+      id: "referrals",
+      title: "Network Rewards",
+      description: "Build your network and earn from every action",
+      icon: "group-add",
+      onPress: handleReferrals,
       showArrow: true,
     },
   ];

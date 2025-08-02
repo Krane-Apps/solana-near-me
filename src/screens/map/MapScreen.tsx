@@ -13,7 +13,10 @@ import {
   Modal,
   Platform,
   Linking,
+  Image,
+  ScrollView,
 } from "react-native";
+import ConfettiCannon from "react-native-confetti-cannon";
 import {
   SafeAreaProvider,
   SafeAreaView,
@@ -40,6 +43,10 @@ import Icon from "react-native-vector-icons/MaterialIcons";
 
 // Import processed merchants data directly
 import processedMerchantsData from "../../lib/data/processed_merchants.json";
+// Import Dabba Network WiFi hotspots data
+import dabbaData from "../../lib/data/dabba.json";
+// Import Dabba logo for WiFi markers
+const dabbaLogo = require("../../../assets/dabbalogo.png");
 
 const FILE_NAME = "MapScreen.tsx";
 
@@ -47,6 +54,20 @@ type MapScreenNavigationProp = StackNavigationProp<RootStackParamList, "Map">;
 
 interface Props {
   navigation: MapScreenNavigationProp;
+}
+
+// WiFi Hotspot interface
+interface WiFiHotspot {
+  _id: string;
+  lat: string;
+  long: string;
+  wdNumber: string;
+  totalHotspots: number;
+  availableHotspots: number;
+  totalBaseDabbas: number;
+  hotspotsSold: number;
+  name?: string;
+  lco: string;
 }
 
 // Global merchant data - process once but keep all merchants
@@ -117,6 +138,25 @@ const calculateDistance = (
 // Process all merchants once globally
 const ALL_MERCHANTS = getAllMerchants();
 
+// Process WiFi hotspots data
+const getAllWiFiHotspots = (): WiFiHotspot[] => {
+  try {
+    const hotspots = (dabbaData as any)?.data?.mapL || [];
+    return hotspots.filter(
+      (hotspot: any) =>
+        hotspot.lat &&
+        hotspot.long &&
+        !isNaN(parseFloat(hotspot.lat)) &&
+        !isNaN(parseFloat(hotspot.long))
+    );
+  } catch (error) {
+    logger.error(FILE_NAME, "Failed to process WiFi hotspots", error);
+    return [];
+  }
+};
+
+const ALL_WIFI_HOTSPOTS = getAllWiFiHotspots();
+
 // Memoized HTML generation - only generate once
 const OPTIMIZED_MAP_HTML = `
 <!DOCTYPE html>
@@ -168,6 +208,47 @@ const OPTIMIZED_MAP_HTML = `
                 transform: rotate(45deg);
             }
             
+            /* WiFi marker styles */
+            .wifi-marker {
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                border: 3px solid #fff;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                transition: transform 0.1s;
+                position: relative;
+            }
+            
+            .wifi-marker:hover {
+                transform: scale(1.1);
+            }
+            
+            .wifi-logo {
+                width: 22px;
+                height: 22px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+                border-radius: 3px;
+            }
+            
+            .dabba-wifi-icon {
+                width: 100%;
+                height: 100%;
+                position: relative;
+                background-size: contain;
+                background-repeat: no-repeat;
+                background-position: center;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
             .leaflet-popup-content-wrapper {
                 background: #2a2a2a;
                 color: #fff;
@@ -195,8 +276,8 @@ const OPTIMIZED_MAP_HTML = `
     <script>
         // Initialize map with performance optimizations
         const map = L.map('map', {
-            center: [50.1109, 8.6821], // Frankfurt, Germany - Central Europe focus
-            zoom: 6, // Closer zoom for smaller European region
+            center: [46.8182, 8.2275], // Switzerland - Less dense marker area for better performance
+            zoom: 8, // Higher zoom to reduce initial marker load
             minZoom: 2, // Restrict minimum zoom to prevent excessive zoom out
             maxZoom: 18, // Maximum zoom for detailed view
             zoomControl: false,
@@ -232,8 +313,8 @@ const OPTIMIZED_MAP_HTML = `
         const iconCache = new Map();
         
         // Pre-create map pin icons for better performance
-        const createMapPinIcon = (category) => {
-            const cacheKey = category.toLowerCase();
+        const createMapPinIcon = (category, dabbaLogoDataUri = '') => {
+            const cacheKey = category.toLowerCase() + (dabbaLogoDataUri ? '_with_logo' : '');
             if (iconCache.has(cacheKey)) {
                 return iconCache.get(cacheKey);
             }
@@ -254,60 +335,105 @@ const OPTIMIZED_MAP_HTML = `
             } else if (cat.includes('shop') || cat.includes('store')) {
                 icon = '🛍️';
                 color = '#96CEB4';
+            } else if (cat === 'wifi' || cat === 'hotspot') {
+                icon = '';
+                color = '#000000';
             }
 
-            const leafletIcon = L.divIcon({
-                html: \`
-                    <div class="map-pin-marker" style="background-color: \${color}">
-                        <div class="pin-icon">\${icon}</div>
-                        <div class="pin-point"></div>
-                    </div>
-                \`,
-                className: 'map-pin-container',
-                iconSize: [30, 40],
-                iconAnchor: [15, 40],
-                popupAnchor: [0, -40]
-            });
+            let leafletIcon;
+            
+            if (cat === 'wifi' || cat === 'hotspot') {
+                // Special WiFi marker with Dabba logo
+                leafletIcon = L.divIcon({
+                    html: \`
+                        <div class="wifi-marker" style="background-color: \${color}">
+                            <div class="wifi-logo">
+                                <div class="dabba-wifi-icon" style="background-image: url('\${dabbaLogoDataUri}');"></div>
+                            </div>
+                        </div>
+                    \`,
+                    className: 'wifi-marker-container',
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 16],
+                    popupAnchor: [0, -16]
+          });
+        } else {
+                // Regular merchant marker
+                leafletIcon = L.divIcon({
+                    html: \`
+                        <div class="map-pin-marker" style="background-color: \${color}">
+                            <div class="pin-icon">\${icon}</div>
+                            <div class="pin-point"></div>
+                        </div>
+                    \`,
+                    className: 'map-pin-container',
+                    iconSize: [30, 40],
+                    iconAnchor: [15, 40],
+                    popupAnchor: [0, -40]
+                });
+            }
 
             iconCache.set(cacheKey, leafletIcon);
             return leafletIcon;
         };
 
-        // Ultra-optimized merchant rendering for all 6993 merchants
-        function addMerchants(merchantData) {
+        // Ultra-optimized rendering for merchants and WiFi hotspots
+        function addMarkers(data, type = 'merchants') {
             // Clear existing markers efficiently
             if (merchantMarkers.length > 0) {
                 merchantMarkers.forEach(marker => map.removeLayer(marker));
                 merchantMarkers = [];
             }
             
-            merchants = merchantData;
-            
-            console.log('🚀 Adding', merchants.length, 'merchants to map...');
+            console.log(\`🚀 Adding \${data.length} \${type} to map...\`);
             
             // Create all markers in one batch for maximum performance
             const allMarkers = [];
             
-            merchants.forEach(merchant => {
-                const icon = createMapPinIcon(merchant.category);
+                            data.forEach(item => {
+                let latitude, longitude, popupContent, category;
                 
-                const marker = L.marker([merchant.latitude, merchant.longitude], {
+                if (type === 'merchants') {
+                    latitude = item.latitude;
+                    longitude = item.longitude;
+                    category = item.category;
+                    popupContent = \`
+                        <div>
+                            <h4 style="margin: 0 0 4px 0; color: #fff; font-size: 14px;">\${item.name}</h4>
+                            <p style="margin: 0 0 2px 0; color: #ccc; font-size: 11px;">\${item.category}</p>
+                            <p style="margin: 0 0 6px 0; color: #ccc; font-size: 10px;">\${item.address}</p>
+                            <button class="popup-button" onclick="selectMerchant(\${item.latitude}, \${item.longitude})">
+                                View Details
+                            </button>
+                        </div>
+                    \`;
+                } else if (type === 'wifi') {
+                    latitude = parseFloat(item.lat);
+                    longitude = parseFloat(item.long);
+                    category = 'wifi';
+                    popupContent = \`
+                        <div>
+                            <h4 style="margin: 0 0 4px 0; color: #fff; font-size: 14px;">\${item.name || item.wdNumber}</h4>
+                            <p style="margin: 0 0 2px 0; color: #ccc; font-size: 11px;">WiFi Hotspot - \${item.lco}</p>
+                            <p style="margin: 0 0 2px 0; color: #ccc; font-size: 10px;">Available: \${item.availableHotspots}/\${item.totalHotspots}</p>
+                            <p style="margin: 0 0 6px 0; color: #ccc; font-size: 10px;">Sold: \${item.hotspotsSold}</p>
+                            <button class="popup-button" onclick="selectWiFiHotspot('\${item._id}')">
+                                View Details
+                            </button>
+                        </div>
+                    \`;
+                }
+                
+                const icon = createMapPinIcon(category, window.dabbaLogoUri || '');
+                
+                const marker = L.marker([latitude, longitude], {
                     icon: icon,
                     riseOnHover: false // Disable for better performance with many markers
                 });
 
                 // Lazy popup - only create when clicked
                 marker.on('click', function() {
-                    marker.bindPopup(\`
-                        <div>
-                            <h4 style="margin: 0 0 4px 0; color: #fff; font-size: 14px;">\${merchant.name}</h4>
-                            <p style="margin: 0 0 2px 0; color: #ccc; font-size: 11px;">\${merchant.category}</p>
-                            <p style="margin: 0 0 6px 0; color: #ccc; font-size: 10px;">\${merchant.address}</p>
-                            <button class="popup-button" onclick="selectMerchant(\${merchant.latitude}, \${merchant.longitude})">
-                                View Details
-                            </button>
-                        </div>
-                    \`, {
+                    marker.bindPopup(popupContent, {
                         maxWidth: 200,
                         closeButton: false,
                         autoPan: false
@@ -322,7 +448,7 @@ const OPTIMIZED_MAP_HTML = `
             markerGroup.addTo(map);
             merchantMarkers = allMarkers;
 
-            console.log('✅ Successfully added', merchants.length, 'merchants to map');
+            console.log(\`✅ Successfully added \${data.length} \${type} to map\`);
         }
 
         // No need for dynamic loading - showing all merchants at once
@@ -349,6 +475,36 @@ const OPTIMIZED_MAP_HTML = `
             map.setView([location.latitude, location.longitude], 14);
         }
 
+        // Country locations for quick navigation - Higher zoom levels for better performance
+        const countryLocations = {
+            'Switzerland': { lat: 46.8182, lng: 8.2275, zoom: 10 },
+            'Germany': { lat: 52.5200, lng: 13.4050, zoom: 9 }, // Focus on Berlin area
+            'France': { lat: 48.8566, lng: 2.3522, zoom: 9 }, // Focus on Paris area
+            'Italy': { lat: 41.9028, lng: 12.4964, zoom: 9 }, // Focus on Rome area
+            'Spain': { lat: 40.4168, lng: -3.7038, zoom: 9 }, // Focus on Madrid area
+            'UK': { lat: 51.5074, lng: -0.1278, zoom: 9 }, // Focus on London area
+            'USA': { lat: 40.7128, lng: -74.0060, zoom: 8 }, // Focus on NYC area
+            'Canada': { lat: 43.6532, lng: -79.3832, zoom: 8 }, // Focus on Toronto area
+            'Brazil': { lat: -23.5505, lng: -46.6333, zoom: 8 }, // Focus on São Paulo area
+            'India': { lat: 28.6139, lng: 77.2090, zoom: 9 }, // Focus on Delhi area
+            'China': { lat: 39.9042, lng: 116.4074, zoom: 8 }, // Focus on Beijing area
+            'Japan': { lat: 35.6762, lng: 139.6503, zoom: 9 }, // Focus on Tokyo area
+            'Australia': { lat: -33.8688, lng: 151.2093, zoom: 9 }, // Focus on Sydney area
+            'Russia': { lat: 55.7558, lng: 37.6173, zoom: 8 } // Focus on Moscow area
+        };
+
+        function navigateToCountry(countryName) {
+            const country = countryLocations[countryName];
+            if (country) {
+                map.setView([country.lat, country.lng], country.zoom);
+                // Notify React Native about country change
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                    type: 'COUNTRY_SELECTED',
+                    data: { country: countryName, ...country }
+                }));
+            }
+        }
+
         function selectMerchant(lat, lng) {
             window.ReactNativeWebView.postMessage(JSON.stringify({
                 type: 'MERCHANT_SELECTED',
@@ -356,11 +512,25 @@ const OPTIMIZED_MAP_HTML = `
             }));
         }
 
+        function selectWiFiHotspot(id) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+                type: 'WIFI_HOTSPOT_SELECTED',
+                data: { id }
+            }));
+        }
+
         // Optimized message handling
         function handleMessage(message) {
             switch(message.type) {
                 case 'SET_MERCHANTS':
-                    addMerchants(message.data);
+                    addMarkers(message.data, 'merchants');
+                    break;
+                case 'SET_WIFI_HOTSPOTS':
+                    // Store Dabba logo URI for WiFi markers
+                    if (message.dabbaLogoUri) {
+                        window.dabbaLogoUri = message.dabbaLogoUri;
+                    }
+                    addMarkers(message.data, 'wifi');
                     break;
                 case 'SET_USER_LOCATION':
                     setUserLocation(message.data);
@@ -378,9 +548,12 @@ const OPTIMIZED_MAP_HTML = `
                         map.zoomOut();
                     }
                     break;
-                    case 'MAP_CENTER_CHANGED':
-                        // This will be handled by React Native
-                        break;
+                case 'NAVIGATE_TO_COUNTRY':
+                    navigateToCountry(message.data.country);
+                    break;
+                case 'MAP_CENTER_CHANGED':
+                    // This will be handled by React Native
+                    break;
             }
         }
 
@@ -412,9 +585,32 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
   const [selectedMerchant, setSelectedMerchant] = useState<Merchant | null>(
     null
   );
+  const [selectedWiFiHotspot, setSelectedWiFiHotspot] =
+    useState<WiFiHotspot | null>(null);
   const [userLocation, setUserLocation] = useState<LocationCoords | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const [isMapReady, setIsMapReady] = useState(false);
+  const [showingWiFi, setShowingWiFi] = useState(false);
+  const [dabbaLogoDataUri, setDabbaLogoDataUri] = useState<string>("");
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  // Popular countries for quick navigation
+  const popularCountries = [
+    "Switzerland",
+    "Germany",
+    "France",
+    "Italy",
+    "Spain",
+    "UK",
+    "USA",
+    "Canada",
+    "Brazil",
+    "India",
+    "China",
+    "Japan",
+    "Australia",
+    "Russia",
+  ];
 
   const webViewRef = useRef<WebView>(null);
   const insets = useSafeAreaInsets();
@@ -422,10 +618,10 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
   // MWA hooks
   const { authorization } = useAuthorization();
 
-  // Show ALL merchants for global view
-  const merchants = useMemo(() => {
-    return ALL_MERCHANTS; // Show all 6993 merchants
-  }, []);
+  // Show merchants or WiFi hotspots based on toggle
+  const displayData = useMemo(() => {
+    return showingWiFi ? ALL_WIFI_HOTSPOTS : ALL_MERCHANTS;
+  }, [showingWiFi]);
 
   // Get user location
   const getUserLocation = useCallback(async () => {
@@ -459,28 +655,64 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
 
         switch (message.type) {
           case "MERCHANT_SELECTED":
-            const merchant = merchants.find(
-              (m) =>
-                m.latitude === message.data.lat &&
-                m.longitude === message.data.lng
-            );
-            if (merchant) {
-              setSelectedMerchant(merchant as Merchant);
+            if (!showingWiFi) {
+              const merchant = ALL_MERCHANTS.find(
+                (m) =>
+                  m.latitude === message.data.lat &&
+                  m.longitude === message.data.lng
+              );
+              if (merchant) {
+                setSelectedMerchant(merchant as Merchant);
+                setSelectedWiFiHotspot(null);
+              }
+            }
+            break;
+          case "WIFI_HOTSPOT_SELECTED":
+            if (showingWiFi) {
+              const hotspot = ALL_WIFI_HOTSPOTS.find(
+                (h) => h._id === message.data.id
+              );
+              if (hotspot) {
+                setSelectedWiFiHotspot(hotspot);
+                setSelectedMerchant(null);
+              }
             }
             break;
           case "MAP_READY":
             logger.info(FILE_NAME, "Map is ready");
             setIsMapReady(true);
-            // Send merchants to map immediately
-            webViewRef.current?.postMessage(
-              JSON.stringify({
-                type: "SET_MERCHANTS",
-                data: merchants,
-              })
-            );
+            // Send data to map immediately based on current view
+            const initialMessage = {
+              type: showingWiFi ? "SET_WIFI_HOTSPOTS" : "SET_MERCHANTS",
+              data: displayData,
+              ...(showingWiFi &&
+                dabbaLogoDataUri && { dabbaLogoUri: dabbaLogoDataUri }),
+            };
+            webViewRef.current?.postMessage(JSON.stringify(initialMessage));
+            break;
+          case "COUNTRY_SELECTED":
+            logger.info(FILE_NAME, "Country selected", message.data);
+            // If WiFi is on and user navigates to a country other than India, turn off WiFi
+            if (showingWiFi && message.data.country !== "India") {
+              setShowingWiFi(false);
+              // Send merchants data to map
+              if (webViewRef.current && isMapReady) {
+                const merchantMessage = {
+                  type: "SET_MERCHANTS",
+                  data: ALL_MERCHANTS,
+                };
+                webViewRef.current.postMessage(JSON.stringify(merchantMessage));
+              }
+              showMessage({
+                message: `🏪 Switched to Merchants`,
+                description: `Showing merchants in ${message.data.country}`,
+                type: "info",
+                duration: 2000,
+              });
+            }
             break;
           case "MAP_CENTER_CHANGED":
-            // Not needed anymore - showing all merchants
+            // Not needed anymore - showing all data
             break;
           default:
             break;
@@ -489,8 +721,56 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
         logger.error(FILE_NAME, "Error handling WebView message", error);
       }
     },
-    [merchants]
+    [displayData, showingWiFi]
   );
+
+  // Handle WiFi toggle button press
+  const handleWiFiToggle = () => {
+    const newShowingWiFi = !showingWiFi;
+    setShowingWiFi(newShowingWiFi);
+
+    // Trigger confetti when turning WiFi ON
+    if (newShowingWiFi) {
+      setShowConfetti(true);
+      // Auto-hide confetti after 3 seconds
+      setTimeout(() => setShowConfetti(false), 3000);
+
+      // Focus on India when WiFi mode is activated
+      if (webViewRef.current && isMapReady) {
+        webViewRef.current.postMessage(
+          JSON.stringify({
+            type: "NAVIGATE_TO_COUNTRY",
+            data: { country: "India" },
+          })
+        );
+      }
+    }
+
+    // Clear any selected items
+    setSelectedMerchant(null);
+    setSelectedWiFiHotspot(null);
+
+    // Send appropriate data to map
+    if (webViewRef.current && isMapReady) {
+      const dataToSend = newShowingWiFi ? ALL_WIFI_HOTSPOTS : ALL_MERCHANTS;
+      const message = {
+        type: newShowingWiFi ? "SET_WIFI_HOTSPOTS" : "SET_MERCHANTS",
+        data: dataToSend,
+        ...(newShowingWiFi &&
+          dabbaLogoDataUri && { dabbaLogoUri: dabbaLogoDataUri }),
+      };
+      webViewRef.current.postMessage(JSON.stringify(message));
+    }
+
+    showMessage({
+      message: newShowingWiFi ? "🎉 Dabba WiFi Network!" : "🏪 Merchants",
+      description: newShowingWiFi
+        ? `Discover ${ALL_WIFI_HOTSPOTS.length} WiFi hotspots across India!`
+        : `Showing ${ALL_MERCHANTS.length} merchants`,
+      type: newShowingWiFi ? "success" : "info",
+      duration: 2000,
+    });
+  };
 
   // Handle pay button press
   const handlePayPress = () => {
@@ -502,6 +782,30 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
       duration: 3000,
       icon: "info",
     });
+  };
+
+  // Handle WiFi hotspot link opening
+  const handleWiFiHotspotLinkPress = (hotspotId: string) => {
+    const url = `https://explorer.dabba.network/map/${hotspotId}`;
+    Linking.openURL(url);
+  };
+
+  // Handle country navigation
+  const handleCountryPress = (country: string) => {
+    if (webViewRef.current && isMapReady) {
+      webViewRef.current.postMessage(
+        JSON.stringify({
+          type: "NAVIGATE_TO_COUNTRY",
+          data: { country },
+        })
+      );
+      showMessage({
+        message: `📍 ${country}`,
+        description: `Navigating to ${country}`,
+        type: "info",
+        duration: 2000,
+      });
+    }
   };
 
   // Handle search button press
@@ -561,33 +865,49 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
     return "★".repeat(Math.floor(rating)) + "☆".repeat(5 - Math.floor(rating));
   };
 
+  // Convert Dabba logo to data URI on mount
+  useEffect(() => {
+    const convertLogoToDataUri = () => {
+      // For React Native, we can use the asset directly as it gets bundled
+      // The require() already gives us the appropriate format for the WebView
+      const logoUri = Image.resolveAssetSource(dabbaLogo).uri;
+      setDabbaLogoDataUri(logoUri);
+      logger.info(FILE_NAME, "Dabba logo converted to data URI", { logoUri });
+    };
+
+    convertLogoToDataUri();
+  }, []);
+
   // Get user location on mount
   useEffect(() => {
     getUserLocation();
   }, [getUserLocation]);
 
-  // Update merchants when map area changes
+  // Update data when map area changes or toggle switches
   useEffect(() => {
     if (isMapReady && webViewRef.current) {
-      webViewRef.current.postMessage(
-        JSON.stringify({
-          type: "SET_MERCHANTS",
-          data: merchants,
-        })
-      );
+      const message = {
+        type: showingWiFi ? "SET_WIFI_HOTSPOTS" : "SET_MERCHANTS",
+        data: displayData,
+        ...(showingWiFi &&
+          dabbaLogoDataUri && { dabbaLogoUri: dabbaLogoDataUri }),
+      };
+      webViewRef.current.postMessage(JSON.stringify(message));
     }
-  }, [merchants, isMapReady]);
+  }, [displayData, isMapReady, showingWiFi, dabbaLogoDataUri]);
 
   // Log performance info
   useEffect(() => {
     logger.info(FILE_NAME, "Global map performance info", {
-      merchantsCount: merchants.length,
+      currentDataCount: displayData.length,
       totalMerchantsAvailable: ALL_MERCHANTS.length,
-      showingAll: merchants.length === ALL_MERCHANTS.length,
-      renderingStrategy:
-        "WebView + Leaflet + Canvas + All Merchants + Map Pins",
+      totalWiFiHotspotsAvailable: ALL_WIFI_HOTSPOTS.length,
+      showingWiFi,
+      renderingStrategy: showingWiFi
+        ? "WebView + Leaflet + Canvas + All WiFi Hotspots + Map Pins"
+        : "WebView + Leaflet + Canvas + All Merchants + Map Pins",
     });
-  }, [merchants]);
+  }, [displayData, showingWiFi]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -598,9 +918,41 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
           onPress={handleSearchPress}
           activeOpacity={0.7}
         >
-          <Icon name="search" size={20} color={SolanaColors.text.secondary} />
-          <Text style={styles.searchButtonText}>
-            {UI_CONSTANTS.SEARCH_PLACEHOLDER}
+          <Icon name="search" size={16} color={SolanaColors.text.secondary} />
+          <Text style={styles.searchButtonText}>Search ...</Text>
+        </TouchableOpacity>
+
+        {/* Dabba WiFi Toggle Button */}
+        <TouchableOpacity
+          style={[
+            styles.dabbaWifiToggleButton,
+            showingWiFi && styles.dabbaWifiToggleButtonActive,
+          ]}
+          onPress={handleWiFiToggle}
+          activeOpacity={0.7}
+        >
+          {dabbaLogoDataUri ? (
+            <Image
+              source={{ uri: dabbaLogoDataUri }}
+              style={styles.dabbaLogoIcon}
+              resizeMode="contain"
+            />
+          ) : (
+            <Icon
+              name="wifi"
+              size={16}
+              color={
+                showingWiFi ? SolanaColors.white : SolanaColors.text.secondary
+              }
+            />
+          )}
+          <Text
+            style={[
+              styles.dabbaWifiToggleText,
+              showingWiFi && styles.dabbaWifiToggleTextActive,
+            ]}
+          >
+            Dabba WiFi
           </Text>
         </TouchableOpacity>
 
@@ -618,7 +970,7 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
                 ? "account-balance-wallet"
                 : "person"
             }
-            size={20}
+            size={18}
             color={
               authorization?.selectedAccount
                 ? SolanaColors.white
@@ -626,6 +978,26 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
             }
           />
         </TouchableOpacity>
+      </View>
+
+      {/* Country Selector */}
+      <View style={styles.countrySelector}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.countryScrollContent}
+        >
+          {popularCountries.map((country) => (
+            <TouchableOpacity
+              key={country}
+              style={styles.countryButton}
+              onPress={() => handleCountryPress(country)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.countryButtonText}>{country}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
 
       {/* Map */}
@@ -804,6 +1176,108 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
           </View>
         </View>
       </Modal>
+
+      {/* WiFi Hotspot Details Modal */}
+      <Modal
+        visible={!!selectedWiFiHotspot}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setSelectedWiFiHotspot(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            {selectedWiFiHotspot && (
+              <>
+                <View style={styles.modalHeader}>
+                  <View style={styles.merchantInfo}>
+                    <Text style={styles.merchantName}>
+                      {selectedWiFiHotspot.name || selectedWiFiHotspot.wdNumber}
+                    </Text>
+                    <Text style={styles.merchantCategory}>
+                      WiFi Hotspot - {selectedWiFiHotspot.lco}
+                    </Text>
+                    <View style={styles.hotspotStats}>
+                      <Text style={styles.hotspotStatsText}>
+                        📶 Available: {selectedWiFiHotspot.availableHotspots}/
+                        {selectedWiFiHotspot.totalHotspots}
+                      </Text>
+                      <Text style={styles.hotspotStatsText}>
+                        💰 Sold: {selectedWiFiHotspot.hotspotsSold}
+                      </Text>
+                    </View>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.closeButton}
+                    onPress={() => setSelectedWiFiHotspot(null)}
+                  >
+                    <Icon
+                      name="close"
+                      size={20}
+                      color={SolanaColors.text.secondary}
+                    />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.merchantDetails}>
+                  <Text style={styles.merchantAddress}>
+                    <Icon
+                      name="location-on"
+                      size={14}
+                      color={SolanaColors.text.secondary}
+                    />{" "}
+                    Lat: {selectedWiFiHotspot.lat}, Long:{" "}
+                    {selectedWiFiHotspot.long}
+                  </Text>
+
+                  <View style={styles.hotspotDetails}>
+                    <Text style={styles.hotspotDetailText}>
+                      🏢 Base Dabbas: {selectedWiFiHotspot.totalBaseDabbas}
+                    </Text>
+                    <Text style={styles.hotspotDetailText}>
+                      🆔 WD Number: {selectedWiFiHotspot.wdNumber}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.modalActions}>
+                  <View style={styles.actionRow}>
+                    <TouchableOpacity
+                      style={styles.dabbaExplorerButton}
+                      onPress={() =>
+                        handleWiFiHotspotLinkPress(selectedWiFiHotspot._id)
+                      }
+                      activeOpacity={0.7}
+                    >
+                      <Icon
+                        name="explore"
+                        size={20}
+                        color={SolanaColors.white}
+                      />
+                      <Text style={styles.dabbaExplorerButtonText}>
+                        View on Dabba Explorer
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Confetti Effect */}
+      {showConfetti && (
+        <ConfettiCannon
+          count={200}
+          origin={{ x: -10, y: 0 }}
+          explosionSpeed={350}
+          fallSpeed={3000}
+          colors={["#FFD700", "#FFA500", "#FF6347", "#9B59B6", "#00C851"]}
+          fadeOut={true}
+          autoStart={true}
+          autoStartDelay={0}
+        />
+      )}
     </View>
   );
 });
@@ -828,30 +1302,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.layout.screenPadding,
     paddingVertical: Spacing.md,
     ...createDarkGlassEffect(0.25),
-    gap: Spacing.md,
+    gap: Spacing.sm, // Smaller gap for tighter layout
   },
 
   searchButton: {
-    flex: 1,
-    height: 48,
+    flex: 1, // Take available space
+    height: 42, // Slimmer height to match WiFi button
     ...createDarkGlassEffect(0.3),
     borderRadius: Spacing.borderRadius.lg,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Spacing.md,
   },
 
   searchButtonText: {
     flex: 1,
-    fontSize: Typography.fontSize.base,
+    fontSize: Typography.fontSize.sm, // Smaller font
     color: SolanaColors.text.secondary,
     fontWeight: Typography.fontWeight.regular,
     marginLeft: Spacing.sm,
   },
 
   profileButton: {
-    width: 48,
-    height: 48,
+    width: 42, // Slimmer width to match height
+    height: 42, // Slimmer height to match WiFi button
     borderRadius: Spacing.borderRadius.lg,
     ...createDarkGlassEffect(0.3),
     justifyContent: "center",
@@ -861,6 +1335,76 @@ const styles = StyleSheet.create({
   profileButtonConnected: {
     backgroundColor: `${SolanaColors.primary}80`,
     borderColor: `${SolanaColors.primary}40`,
+  },
+
+  dabbaWifiToggleButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.lg, // Larger padding
+    paddingVertical: Spacing.sm,
+    borderRadius: Spacing.borderRadius.lg,
+    ...createDarkGlassEffect(0.3),
+    gap: Spacing.sm,
+    minWidth: 120, // Ensure minimum width
+    height: 42, // Match other buttons height
+  },
+
+  dabbaWifiToggleButtonActive: {
+    backgroundColor: `${SolanaColors.accent}80`,
+    borderColor: `${SolanaColors.accent}40`,
+    shadowColor: SolanaColors.accent,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 6,
+  },
+
+  dabbaLogoIcon: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+  },
+
+  dabbaWifiToggleText: {
+    fontSize: Typography.fontSize.sm, // Larger text
+    color: SolanaColors.text.secondary,
+    fontWeight: Typography.fontWeight.bold,
+  },
+
+  dabbaWifiToggleTextActive: {
+    color: SolanaColors.white,
+  },
+
+  // Country Selector
+  countrySelector: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.layout.screenPadding,
+    ...createDarkGlassEffect(0.15),
+  },
+
+  countryScrollContent: {
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.xs,
+  },
+
+  countryButton: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: Spacing.borderRadius.lg,
+    backgroundColor: SolanaColors.background.secondary,
+    borderWidth: 1,
+    borderColor: SolanaColors.border.primary,
+    minWidth: 80,
+    alignItems: "center",
+  },
+
+  countryButtonText: {
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.medium,
+    color: SolanaColors.text.primary,
   },
 
   mapContainer: {
@@ -1081,6 +1625,45 @@ const styles = StyleSheet.create({
   },
 
   payButtonText: {
+    color: SolanaColors.white,
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.medium,
+  },
+
+  // WiFi Hotspot Modal Styles
+  hotspotStats: {
+    marginTop: Spacing.sm,
+    gap: Spacing.xs,
+  },
+
+  hotspotStatsText: {
+    fontSize: Typography.fontSize.sm,
+    color: SolanaColors.text.secondary,
+  },
+
+  hotspotDetails: {
+    marginTop: Spacing.md,
+    gap: Spacing.sm,
+  },
+
+  hotspotDetailText: {
+    fontSize: Typography.fontSize.sm,
+    color: SolanaColors.text.primary,
+  },
+
+  dabbaExplorerButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: SolanaColors.accent,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderRadius: Spacing.borderRadius.lg,
+    gap: Spacing.sm,
+    flex: 1,
+  },
+
+  dabbaExplorerButtonText: {
     color: SolanaColors.white,
     fontSize: Typography.fontSize.sm,
     fontWeight: Typography.fontWeight.medium,

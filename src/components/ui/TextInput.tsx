@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.borderRadius.md,
     borderWidth: 1,
     borderColor: SolanaColors.border.primary,
-    backgroundColor: SolanaColors.white,
+    backgroundColor: SolanaColors.background.card,
     shadowColor: SolanaColors.shadow.light,
     shadowOffset: {
       width: 0,
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   },
 
   outlined: {
-    backgroundColor: SolanaColors.white,
+    backgroundColor: SolanaColors.background.card,
     borderWidth: 1,
     borderColor: SolanaColors.border.primary,
   },
