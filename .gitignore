@@ -77,3 +77,16 @@ google-services.json
 .env.local
 .env.production
 .env.staging
+
+# Sensitive Publishing Files
+/publishing/solana-wallet/
+/publishing/*.apk
+/publishing/.env
+/android/app/nearme.keystore
+/android/app/release/
+gradle.properties
+
+# Temporary build files
+/publishing/.asset-manifest*.json
+/publishing/node_modules/
+

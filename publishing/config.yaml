@@ -1,0 +1,187 @@
+publisher:
+  name: Ishan Lakhwani
+  website: https://bluntbrain.vercel.app/
+  email: ishan.lakhwani@gmail.com
+app:
+  name: NearMe
+  address: 5aAgnw5wEDdRXPG1iFDpxDum63e3UmpwiqSBLymEJjqt
+  android_package: com.bluntbrain.NearMe
+  urls:
+    license_url: https://github.com/bluntbrain/solana-near-me/blob/main/LICENSE
+    copyright_url: https://github.com/bluntbrain/solana-near-me
+    privacy_policy_url: https://github.com/bluntbrain/solana-near-me/blob/main/docs/privacy-policy.md
+    website: https://github.com/bluntbrain/solana-near-me
+  media:
+    - purpose: icon
+      uri: storeicon.png
+release:
+  address: 56LowjT1m8Pzjgyz4zSA6YXHjjz6hwQhC1oE6yF5fJC4
+  media:
+    - purpose: icon
+      uri: storeicon.png
+    - purpose: banner
+      uri: banner.png
+    - purpose: screenshot
+      uri: ScreenShot_01.png
+    - purpose: screenshot
+      uri: ScreenShot_02.png
+    - purpose: screenshot
+      uri: ScreenShot_03.png
+    - purpose: screenshot
+      uri: ScreenShot_04.png
+    - purpose: screenshot
+      uri: ScreenShot_05.png
+  files:
+    - purpose: install
+      uri: NearMe-v1.0.1-production.apk
+  catalog:
+    en-US:
+      name: NearMe - Solana Mobile Payment dApp
+      short_description: Solana payments & rewards
+      long_description: |
+        NearMe is a revolutionary React Native mobile application that enables seamless crypto payments at local merchants using Solana blockchain technology. Built for the Solana Mobile Hackathon, this app bridges the gap between traditional commerce and decentralized payments.
+
+        🚀 Key Features:
+        • Interactive Map: Discover crypto-accepting merchants in Bangalore with real-time location services
+        • Solana Payments: Pay with SOL or USDC using Mobile Wallet Adapter for secure transactions
+        • Real-time Conversion: Live SOL/USDC to USD exchange rates for informed payments
+        • Rewards System: Earn 1% cashback in SOL for all transactions automatically
+        • NFT Badges: Collect achievement-based NFT rewards for milestones
+        • Solana Pay Integration: Standard compliant QR code generation and payment processing
+        • Dark Theme: Professional Solana-branded UI with purple theme
+
+        🛠️ Technical Stack:
+        • React Native with Expo for cross-platform development
+        • TypeScript for enhanced code reliability
+        • Mobile Wallet Adapter for native wallet integration
+        • Solana Web3.js for blockchain interactions
+        • Firebase Realtime Database for optimized merchant data (98%+ cost savings)
+        • React Native Maps for location services
+        • Real Solana Pay transactions (no mocks)
+
+        🏗️ Architecture Highlights:
+        • Ultra-efficient data flow with Firebase Realtime Database
+        • Only 1 Firebase read per session vs 6,993 reads with traditional approach
+        • 99.8% cost reduction in data operations
+        • Instant offline support and 14ms filtering performance
+        • Multi-token support (SOL and USDC) with automatic account creation
+
+        This app demonstrates the future of mobile commerce on Solana, providing users with a seamless way to discover and pay at local merchants while earning rewards in the process.
+      new_in_version: |
+        Version 1.0.1 - Production release for Solana dApp Store
+        Initial release of NearMe - Solana Mobile Payment dApp
+
+        ✨ What's New:
+        • Interactive map with crypto-accepting merchants in Bangalore
+        • Secure Solana payments using Mobile Wallet Adapter
+        • Support for both SOL and USDC transactions
+        • 1% SOL cashback rewards system
+        • NFT achievement badges
+        • Real-time currency conversion
+        • Professional Solana-branded dark theme
+        • Optimized Firebase backend for 99.8% cost reduction
+        • Offline support and instant merchant filtering
+      saga_features: |
+        NearMe leverages Solana Mobile Stack features for an enhanced mobile Web3 experience:
+
+        🔐 Mobile Wallet Adapter Integration:
+        • Secure transaction signing with native mobile wallets
+        • Seamless connection with Phantom, Solflare, and other MWA-compatible wallets
+        • No private keys stored in app for maximum security
+
+        💰 Solana Pay Implementation:
+        • Standard-compliant payment processing
+        • QR code generation for merchant payments
+        • Multi-token support (SOL, USDC)
+        • Transaction validation and confirmation
+
+        🎯 Optimized for Solana Mobile:
+        • Native Android development with proper Solana Mobile SDKs
+        • Firebase integration for real-time merchant data
+        • Location-based services for merchant discovery
+        • Rewards system built on Solana blockchain
+solana_mobile_dapp_publisher_portal:
+  testing_instructions: |
+    NearMe - Solana Mobile Payment dApp Testing Instructions
+
+    📱 Prerequisites:
+    • Android device with Android 6.0+ (API level 23+)
+    • Install a MWA-compatible wallet (Phantom, Solflare, or Backpack recommended)
+    • Enable location services for map functionality
+    • Stable internet connection for blockchain interactions
+
+    🧪 Testing Steps:
+
+    1. App Launch & Onboarding:
+       • Launch NearMe app
+       • Review welcome screen and feature highlights
+       • Tap "Get Started" to proceed to main map screen
+
+    2. Map & Location Features:
+       • Verify map loads with merchant markers in Bangalore area
+       • Test location permission request and approval
+       • Verify purple Solana-branded map pins are displayed
+       • Test category filtering functionality
+       • Tap on merchant markers to view details
+
+    3. Wallet Connection:
+       • Navigate to Profile or Payment section
+       • Tap "Connect Wallet" button
+       • Verify Mobile Wallet Adapter launches properly
+       • Connect using installed wallet (Phantom/Solflare/etc.)
+       • Confirm wallet address is displayed correctly
+
+    4. Payment Flow Testing:
+       • Select a merchant from the map
+       • Choose "Pay with Crypto" option
+       • Enter a test amount (recommend $1-5 USD equivalent)
+       • Select SOL or USDC token for payment
+       • Verify real-time exchange rate calculation
+       • Review transaction summary
+       • Complete payment through wallet signing
+       • Verify transaction success screen
+       • Check 1% SOL cashback calculation
+
+    5. Rewards & Profile:
+       • Navigate to Rewards screen
+       • Verify SOL balance display
+       • Check transaction history
+       • Test achievement progress tracking
+       • Verify NFT badge collection interface
+
+    🔍 Key Areas to Test:
+    • Mobile Wallet Adapter integration and signing
+    • Real-time SOL/USDC price fetching
+    • Firebase merchant data loading (should be instant after first load)
+    • Location-based merchant filtering
+    • Transaction completion and confirmation
+    • Reward calculation accuracy
+    • Dark theme UI consistency
+
+    ⚠️ Important Notes:
+    • App uses DEVNET for testing - no real funds required
+    • Merchant data is sourced from CryptWerk database (Bangalore area)
+    • Firebase Realtime Database provides optimized performance
+    • All transactions are real Solana blockchain interactions
+    • Location services required for optimal experience
+
+    📊 Expected Performance:
+    • Initial app load: ~2-3 seconds
+    • Merchant data loading: 1.5 seconds first time, instant thereafter
+    • Map rendering: <1 second
+    • Wallet connection: 2-5 seconds
+    • Transaction signing: Depends on wallet app
+
+    🐛 Known Limitations:
+    • Currently focused on Bangalore merchants only
+    • Requires Android (iOS not supported in current version)
+    • Some merchants may not have complete address information
+    • Devnet transactions only for testing
+
+    For issues or questions, contact: ishan.lakhwani@gmail.com
+lastSubmittedVersionOnChain:
+  address: 56LowjT1m8Pzjgyz4zSA6YXHjjz6hwQhC1oE6yF5fJC4
+  version_code: 2
+  apk_hash: O2JTdeY8hSekcrzOxI75F21a98alR6VzNlzOW1fiRXY=
+lastUpdatedVersionOnStore:
+  address: 56LowjT1m8Pzjgyz4zSA6YXHjjz6hwQhC1oE6yF5fJC4

@@ -1,6 +1,27 @@
 # NearMe - Solana Mobile Payment dApp
 
-A React Native mobile application that enables crypto payments at local merchants using Solana blockchain technology. Built for the Solana Mobile Hackathon.
+[![Solana dApp Store](https://img.shields.io/badge/🚀_Successfully_Submitted_to-Solana_dApp_Store-9945FF?style=for-the-badge&logo=solana)](release.md)
+
+**📋 [View Complete Release Details →](release.md)**
+
+A React Native mobile application that enables crypto payments at local merchants using Solana blockchain technology. **Successfully submitted to the Solana dApp Store** and currently under review.
+
+## 📱 App Screenshots
+
+<div align="center">
+  <img src="https://arweave.net/Oed1UWb5ge58DcjtkmWwnIFEuq8XSnWw0dZ_AjFI18s" alt="Welcome Screen" width="200"/>
+  <img src="https://arweave.net/FoEOCuds7lXTGzcyGJNvxLb-qLf9k4ELg9_1k37OeCQ" alt="Map Screen" width="200"/>
+  <img src="https://arweave.net/l3dyPjlaslNjg7AAUvL_HNw0-wI4c5r_ZTgkHK842Fw" alt="Payment Screen" width="200"/>
+  <img src="https://arweave.net/0B-CejsSYPTXNAk2ldKhPZ-JKZR2oxz3Eq7HxhBQRHY" alt="Success Screen" width="200"/>
+</div>
+
+## 🏆 Solana dApp Store Submission
+
+✅ **Status**: Successfully Submitted (Under Review)  
+📅 **Submission Date**: August 3, 2024  
+⏱️ **Expected Review**: 3-4 business days  
+🔗 **App NFT**: [`5aAgnw5wEDdRXPG1iFDpxDum63e3UmpwiqSBLymEJjqt`](https://explorer.solana.com/address/5aAgnw5wEDdRXPG1iFDpxDum63e3UmpwiqSBLymEJjqt?cluster=mainnet)  
+🔗 **Release NFT**: [`56LowjT1m8Pzjgyz4zSA6YXHjjz6hwQhC1oE6yF5fJC4`](https://explorer.solana.com/address/56LowjT1m8Pzjgyz4zSA6YXHjjz6hwQhC1oE6yF5fJC4?cluster=mainnet)
 
 ## 🚀 Features
 
