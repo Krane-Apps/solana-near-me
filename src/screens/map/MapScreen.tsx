@@ -797,53 +797,70 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
     }
 
     try {
+      // Use proper Solana Pay URL format according to specification
+      // Format: solana:<recipient>?amount=<amount>&message=<message>&memo=<memo>
+      const solanaPayUrl = `solana:${selectedMerchant.walletAddress}?amount=0.01&message=${encodeURIComponent(`Payment to ${selectedMerchant.name}`)}&memo=${encodeURIComponent(`NearMe-${Date.now()}`)}`;
+      
       // List of wallet deep links to try in order of preference
       const walletOptions = [
         {
           name: "Phantom",
-          url: `https://phantom.app/ul/v1/browse/solana-pay?recipient=${encodeURIComponent(selectedMerchant.walletAddress)}&message=${encodeURIComponent(`Payment to ${selectedMerchant.name}`)}&memo=${encodeURIComponent(`NearMe payment to ${selectedMerchant.name}`)}`,
-          deepLink: `phantom://browse/solana-pay?recipient=${encodeURIComponent(selectedMerchant.walletAddress)}&message=${encodeURIComponent(`Payment to ${selectedMerchant.name}`)}`,
+          // Use standard Solana Pay format - wallets should handle this automatically
+          url: solanaPayUrl,
+          // Phantom-specific deeplink using Solana Pay protocol
+          deepLink: solanaPayUrl,
         },
         {
-          name: "Solflare",
-          url: `https://solflare.com/ul/v1/browse/solana-pay?recipient=${encodeURIComponent(selectedMerchant.walletAddress)}&message=${encodeURIComponent(`Payment to ${selectedMerchant.name}`)}`,
-          deepLink: `solflare://solana-pay?recipient=${encodeURIComponent(selectedMerchant.walletAddress)}&message=${encodeURIComponent(`Payment to ${selectedMerchant.name}`)}`,
+          name: "Solflare", 
+          // Solflare also supports standard Solana Pay
+          url: solanaPayUrl,
+          deepLink: solanaPayUrl,
+        },
+        {
+          name: "Backpack",
+          // Backpack wallet support
+          url: solanaPayUrl,
+          deepLink: solanaPayUrl,
         }
       ];
 
       let walletOpened = false;
 
-      // Try each wallet option
-      for (const wallet of walletOptions) {
-        try {
-          // Try universal link first
-          const canOpenUrl = await Linking.canOpenURL(wallet.url);
-          if (canOpenUrl) {
-            await Linking.openURL(wallet.url);
-            walletOpened = true;
-            logger.info(FILE_NAME, `Opened ${wallet.name} wallet for payment`, {
-              merchant: selectedMerchant.name,
-              walletAddress: selectedMerchant.walletAddress,
-              method: "universal_link"
-            });
-            break;
+      // Try opening Solana Pay URL - let the OS route to appropriate wallet
+      try {
+        const canOpenSolanaPay = await Linking.canOpenURL(solanaPayUrl);
+        if (canOpenSolanaPay) {
+          await Linking.openURL(solanaPayUrl);
+          walletOpened = true;
+          logger.info(FILE_NAME, "Opened Solana Pay URL", {
+            merchant: selectedMerchant.name,
+            walletAddress: selectedMerchant.walletAddress,
+            paymentUrl: solanaPayUrl
+          });
+        }
+      } catch (solanaPayError) {
+        logger.warn(FILE_NAME, "Failed to open Solana Pay URL, trying wallet-specific URLs", solanaPayError);
+        
+        // Fallback: Try wallet-specific URLs if Solana Pay doesn't work
+        for (const wallet of walletOptions) {
+          try {
+            // For older devices/wallets that might not support solana: protocol
+            const httpsUrl = `https://phantom.app/ul/browse?url=${encodeURIComponent(solanaPayUrl)}`;
+            const canOpenUrl = await Linking.canOpenURL(httpsUrl);
+            if (canOpenUrl) {
+              await Linking.openURL(httpsUrl);
+              walletOpened = true;
+              logger.info(FILE_NAME, `Opened ${wallet.name} wallet via HTTPS redirect`, {
+                merchant: selectedMerchant.name,
+                walletAddress: selectedMerchant.walletAddress,
+                method: "https_redirect"
+              });
+              break;
+            }
+          } catch (walletError) {
+            logger.warn(FILE_NAME, `Failed to open ${wallet.name}`, walletError);
+            continue;
           }
-
-          // Try deep link if universal link doesn't work
-          const canOpenDeepLink = await Linking.canOpenURL(wallet.deepLink);
-          if (canOpenDeepLink) {
-            await Linking.openURL(wallet.deepLink);
-            walletOpened = true;
-            logger.info(FILE_NAME, `Opened ${wallet.name} wallet for payment`, {
-              merchant: selectedMerchant.name,
-              walletAddress: selectedMerchant.walletAddress,
-              method: "deep_link"
-            });
-            break;
-          }
-        } catch (walletError) {
-          logger.warn(FILE_NAME, `Failed to open ${wallet.name}`, walletError);
-          continue;
         }
       }
 
