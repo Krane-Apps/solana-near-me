@@ -7,10 +7,10 @@ app:
   address: 5aAgnw5wEDdRXPG1iFDpxDum63e3UmpwiqSBLymEJjqt
   android_package: com.bluntbrain.NearMe
   urls:
-    license_url: https://github.com/bluntbrain/solana-near-me/blob/main/LICENSE
-    copyright_url: https://github.com/bluntbrain/solana-near-me
-    privacy_policy_url: https://github.com/bluntbrain/solana-near-me/blob/main/docs/privacy-policy.md
-    website: https://github.com/bluntbrain/solana-near-me
+    license_url: https://github.com/Krane-Apps/solana-near-me/blob/main/LICENSE
+copyright_url: https://github.com/Krane-Apps/solana-near-me
+privacy_policy_url: https://github.com/Krane-Apps/solana-near-me/blob/main/docs/privacy-policy.md
+website: https://github.com/Krane-Apps/solana-near-me
   media:
     - purpose: icon
       uri: storeicon.png

@@ -110,7 +110,7 @@ sequenceDiagram
 ### 1. Clone and Install
 
 ```bash
-git clone https://github.com/bluntbrain/solana-near-me.git
+git clone https://github.com/Krane-Apps/solana-near-me.git
 cd solana-near-me
 npm install
 ```
@@ -547,7 +547,7 @@ eas build --profile development --platform android --local
 ## 📞 Support
 
 For issues and questions:
-- GitHub Issues: [Create an issue](https://github.com/bluntbrain/solana-near-me/issues)
+- GitHub Issues: [Create an issue](https://github.com/Krane-Apps/solana-near-me/issues)
 - Discord: Join the Solana Mobile Discord
 
 ---

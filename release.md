@@ -139,7 +139,7 @@ All app assets have been permanently uploaded to Arweave for decentralized stora
 
 - **Developer:** Ishan Lakhwani
 - **Email:** ishan.lakhwani@gmail.com
-- **GitHub:** [bluntbrain/solana-near-me](https://github.com/bluntbrain/solana-near-me)
+- **GitHub:** [Krane-Apps/solana-near-me](https://github.com/Krane-Apps/solana-near-me)
 
 ## 🏆 Achievement Summary
 
