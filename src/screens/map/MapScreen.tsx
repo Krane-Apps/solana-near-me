@@ -106,6 +106,7 @@ const getAllMerchants = () => {
         googleMapsLink: merchant.googleMapsLink || "",
         id: merchant.id || merchant.name,
         rating: merchant.rating || 0,
+        walletAddress: merchant.walletAddress || "",
       }));
   } catch (error) {
     logger.error(FILE_NAME, "Failed to process merchants", error);
@@ -773,15 +774,97 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
   };
 
   // Handle pay button press
-  const handlePayPress = () => {
-    // Show coming soon toast instead of navigating
-    showMessage({
-      message: "Coming Soon! 🚀",
-      description: "Payment feature is under development. Stay tuned!",
-      type: "info",
-      duration: 3000,
-      icon: "info",
-    });
+  const handlePayPress = async () => {
+    if (!selectedMerchant) {
+      showMessage({
+        message: "Error",
+        description: "No merchant selected",
+        type: "danger",
+        duration: 2000,
+      });
+      return;
+    }
+
+    // Check if merchant has a wallet address
+    if (!selectedMerchant.walletAddress || selectedMerchant.walletAddress.trim() === '') {
+      showMessage({
+        message: "Merchant Not Verified",
+        description: "This merchant hasn't set up their wallet address yet",
+        type: "warning",
+        duration: 3000,
+      });
+      return;
+    }
+
+    try {
+      // List of wallet deep links to try in order of preference
+      const walletOptions = [
+        {
+          name: "Phantom",
+          url: `https://phantom.app/ul/v1/browse/solana-pay?recipient=${encodeURIComponent(selectedMerchant.walletAddress)}&message=${encodeURIComponent(`Payment to ${selectedMerchant.name}`)}&memo=${encodeURIComponent(`NearMe payment to ${selectedMerchant.name}`)}`,
+          deepLink: `phantom://browse/solana-pay?recipient=${encodeURIComponent(selectedMerchant.walletAddress)}&message=${encodeURIComponent(`Payment to ${selectedMerchant.name}`)}`,
+        },
+        {
+          name: "Solflare",
+          url: `https://solflare.com/ul/v1/browse/solana-pay?recipient=${encodeURIComponent(selectedMerchant.walletAddress)}&message=${encodeURIComponent(`Payment to ${selectedMerchant.name}`)}`,
+          deepLink: `solflare://solana-pay?recipient=${encodeURIComponent(selectedMerchant.walletAddress)}&message=${encodeURIComponent(`Payment to ${selectedMerchant.name}`)}`,
+        }
+      ];
+
+      let walletOpened = false;
+
+      // Try each wallet option
+      for (const wallet of walletOptions) {
+        try {
+          // Try universal link first
+          const canOpenUrl = await Linking.canOpenURL(wallet.url);
+          if (canOpenUrl) {
+            await Linking.openURL(wallet.url);
+            walletOpened = true;
+            logger.info(FILE_NAME, `Opened ${wallet.name} wallet for payment`, {
+              merchant: selectedMerchant.name,
+              walletAddress: selectedMerchant.walletAddress,
+              method: "universal_link"
+            });
+            break;
+          }
+
+          // Try deep link if universal link doesn't work
+          const canOpenDeepLink = await Linking.canOpenURL(wallet.deepLink);
+          if (canOpenDeepLink) {
+            await Linking.openURL(wallet.deepLink);
+            walletOpened = true;
+            logger.info(FILE_NAME, `Opened ${wallet.name} wallet for payment`, {
+              merchant: selectedMerchant.name,
+              walletAddress: selectedMerchant.walletAddress,
+              method: "deep_link"
+            });
+            break;
+          }
+        } catch (walletError) {
+          logger.warn(FILE_NAME, `Failed to open ${wallet.name}`, walletError);
+          continue;
+        }
+      }
+
+      if (!walletOpened) {
+        // Show no supported apps message
+        showMessage({
+          message: "No Supported Apps Found",
+          description: "Please install Phantom, Solflare, or another Solana wallet app to make payments",
+          type: "warning",
+          duration: 4000,
+        });
+      }
+    } catch (error) {
+      logger.error(FILE_NAME, "Error opening payment app", error);
+      showMessage({
+        message: "Payment Error",
+        description: "Unable to open payment app. Please try again.",
+        type: "danger",
+        duration: 3000,
+      });
+    }
   };
 
   // Handle WiFi hotspot link opening
@@ -1080,9 +1163,17 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
               <>
                 <View style={styles.modalHeader}>
                   <View style={styles.merchantInfo}>
-                    <Text style={styles.merchantName}>
-                      {selectedMerchant.name}
-                    </Text>
+                    <View style={styles.merchantNameRow}>
+                      <Text style={styles.merchantName}>
+                        {selectedMerchant.name}
+                      </Text>
+                      {selectedMerchant.walletAddress && selectedMerchant.walletAddress.trim() !== '' && (
+                        <View style={styles.verifiedBadge}>
+                          <Icon name="verified" size={16} color={SolanaColors.status.success} />
+                          <Text style={styles.verifiedText}>Verified</Text>
+                        </View>
+                      )}
+                    </View>
                     <Text style={styles.merchantCategory}>
                       {selectedMerchant.category}
                     </Text>
@@ -1157,17 +1248,29 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
                         Directions
                       </Text>
                     </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.payButton}
+                                        <TouchableOpacity
+                      style={[
+                        styles.payButton,
+                        (!selectedMerchant.walletAddress || selectedMerchant.walletAddress.trim() === '') && styles.payButtonDisabled
+                      ]}
                       onPress={handlePayPress}
                       activeOpacity={0.7}
                     >
                       <Icon
-                        name="payment"
+                        name={
+                          selectedMerchant.walletAddress && selectedMerchant.walletAddress.trim() !== '' 
+                            ? "payment" 
+                            : "error_outline"
+                        }
                         size={20}
                         color={SolanaColors.white}
                       />
-                      <Text style={styles.payButtonText}>Pay Now</Text>
+                      <Text style={styles.payButtonText}>
+                        {selectedMerchant.walletAddress && selectedMerchant.walletAddress.trim() !== '' 
+                          ? "Pay Now" 
+                          : "Not Verified"
+                        }
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -1499,11 +1602,34 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
+  merchantNameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: Spacing.xs,
+  },
+
   merchantName: {
     fontSize: Typography.fontSize["2xl"],
     fontWeight: Typography.fontWeight.bold,
     color: SolanaColors.text.primary,
-    marginBottom: Spacing.xs,
+    flex: 1,
+  },
+
+  verifiedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: `${SolanaColors.status.success}20`,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: Spacing.borderRadius.md,
+    gap: Spacing.xs,
+  },
+
+  verifiedText: {
+    fontSize: Typography.fontSize.xs,
+    fontWeight: Typography.fontWeight.medium,
+    color: SolanaColors.status.success,
   },
 
   merchantCategory: {
@@ -1628,6 +1754,11 @@ const styles = StyleSheet.create({
     color: SolanaColors.white,
     fontSize: Typography.fontSize.sm,
     fontWeight: Typography.fontWeight.medium,
+  },
+
+  payButtonDisabled: {
+    backgroundColor: SolanaColors.status.warning,
+    opacity: 0.8,
   },
 
   // WiFi Hotspot Modal Styles
