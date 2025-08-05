@@ -5,10 +5,11 @@
 ## 📱 App Information
 
 **App Name:** NearMe - Solana Mobile Payment dApp  
-**Version:** 1.0.1  
+**Version:** 1.0.2 (Latest Update)  
 **Package:** com.bluntbrain.NearMe  
 **APK Size:** 83MB  
-**Release Date:** August 3, 2024  
+**Initial Release:** August 3, 2024  
+**Latest Update:** August 5, 2024  
 
 ## 🎯 Release Summary
 
@@ -21,7 +22,8 @@ NearMe has been **successfully submitted** to the Solana dApp Store! This React 
 | Asset Type | Address | Explorer Link |
 |------------|---------|---------------|
 | **App NFT** | `5aAgnw5wEDdRXPG1iFDpxDum63e3UmpwiqSBLymEJjqt` | [View on Solana Explorer](https://explorer.solana.com/address/5aAgnw5wEDdRXPG1iFDpxDum63e3UmpwiqSBLymEJjqt?cluster=mainnet) |
-| **Release NFT** | `56LowjT1m8Pzjgyz4zSA6YXHjjz6hwQhC1oE6yF5fJC4` | [View on Solana Explorer](https://explorer.solana.com/address/56LowjT1m8Pzjgyz4zSA6YXHjjz6hwQhC1oE6yF5fJC4?cluster=mainnet) |
+| **Release NFT (v1.0.1)** | `56LowjT1m8Pzjgyz4zSA6YXHjjz6hwQhC1oE6yF5fJC4` | [View on Solana Explorer](https://explorer.solana.com/address/56LowjT1m8Pzjgyz4zSA6YXHjjz6hwQhC1oE6yF5fJC4?cluster=mainnet) |
+| **Release NFT (v1.0.2)** | `4z5KrFivQmpkjEEFHTVf1jpqf1X3exC1E8xvzVntjjq7` | [View on Solana Explorer](https://explorer.solana.com/address/4z5KrFivQmpkjEEFHTVf1jpqf1X3exC1E8xvzVntjjq7?cluster=mainnet) |
 | **Publisher Wallet** | `4fqfqBWhUqUi4YGSY3ETPFP24NKHpmiYtCzEoBzKmzL7` | [View on Solana Explorer](https://explorer.solana.com/address/4fqfqBWhUqUi4YGSY3ETPFP24NKHpmiYtCzEoBzKmzL7?cluster=mainnet) |
 
 ### 🔗 Transaction Hashes
@@ -29,14 +31,16 @@ NearMe has been **successfully submitted** to the Solana dApp Store! This React 
 | Transaction Type | Hash | Explorer Link |
 |------------------|------|---------------|
 | **App NFT Creation** | `2B62dp7boNA2o3npmpDMn8LZQKYHk3KdmCsRgoSi5P3FfMx8sYppybp2GfDgAptf84vEQ4MAAzfUNpTRTHFGEDxc` | [View Transaction](https://explorer.solana.com/tx/2B62dp7boNA2o3npmpDMn8LZQKYHk3KdmCsRgoSi5P3FfMx8sYppybp2GfDgAptf84vEQ4MAAzfUNpTRTHFGEDxc?cluster=mainnet) |
-| **Release NFT Creation** | `65BmuTRVMspXtvCex1KQjtdwiUeCfNg1yFwsdF6qWa5XcWCPri2RTJKKgYgzwoHkJqzE73asm9MmkMXd5ovZE4gW` | [View Transaction](https://explorer.solana.com/tx/65BmuTRVMspXtvCex1KQjtdwiUeCfNg1yFwsdF6qWa5XcWCPri2RTJKKgYgzwoHkJqzE73asm9MmkMXd5ovZE4gW?cluster=mainnet) |
+| **Release NFT Creation (v1.0.1)** | `65BmuTRVMspXtvCex1KQjtdwiUeCfNg1yFwsdF6qWa5XcWCPri2RTJKKgYgzwoHkJqzE73asm9MmkMXd5ovZE4gW` | [View Transaction](https://explorer.solana.com/tx/65BmuTRVMspXtvCex1KQjtdwiUeCfNg1yFwsdF6qWa5XcWCPri2RTJKKgYgzwoHkJqzE73asm9MmkMXd5ovZE4gW?cluster=mainnet) |
+| **Release NFT Creation (v1.0.2)** | `uRQ36S3VJhHAmt4ojxNzdX1xCVnaYoRKsVCeWxpqH5ZaaietqJ8PMy31T8PiiYT8LhgWJtAZjFn84oTMD4esH8y` | [View Transaction](https://explorer.solana.com/tx/uRQ36S3VJhHAmt4ojxNzdX1xCVnaYoRKsVCeWxpqH5ZaaietqJ8PMy31T8PiiYT8LhgWJtAZjFn84oTMD4esH8y?cluster=mainnet) |
 
 ## 🖼️ Arweave Asset Links
 
 All app assets have been permanently uploaded to Arweave for decentralized storage:
 
 ### 📱 Application Files
-- **APK File:** [NearMe-v1.0.1-production.apk](https://arweave.net/MuI3NPjZg22bvJ-uqG4PisuDkUIX8u6TWWi2Cw0BXhQ)
+- **APK File (v1.0.1):** [NearMe-v1.0.1-production.apk](https://arweave.net/MuI3NPjZg22bvJ-uqG4PisuDkUIX8u6TWWi2Cw0BXhQ)
+- **APK File (v1.0.2):** [NearMe-v1.0.2-production.apk](https://arweave.net/Ja9Y0Dj13j1t31IuqW69hGasN9YXSWdq_CuSPX0eQYc)
 
 ### 🎨 Visual Assets
 - **App Icon:** [storeicon.png](https://arweave.net/1UzEkSJan6Kny3KGj16-vYwSYTdWAWMqrkW8NHo7GCg)
@@ -53,8 +57,8 @@ All app assets have been permanently uploaded to Arweave for decentralized stora
 ## 🏗️ Technical Details
 
 ### 🔧 Build Configuration
-- **Version Code:** 2
-- **Version Name:** 1.0.1
+- **Version Code:** 3 (Updated from 2)
+- **Version Name:** 1.0.2 (Updated from 1.0.1)
 - **Target SDK:** Android 34
 - **Min SDK:** Android 23 (API level 23)
 - **Architecture:** arm64-v8a, armeabi-v7a, x86, x86_64
@@ -84,10 +88,28 @@ All app assets have been permanently uploaded to Arweave for decentralized stora
 - **Target Audience:** Crypto enthusiasts, local merchants, mobile payment users
 
 ### 🔍 Review Status
-- **Submission Date:** August 3, 2024
-- **Status:** Under Review
-- **Expected Review Time:** 3-4 business days
-- **Portal Response:** "Thanks for submitting a new dApp request for the Solana dApp Store."
+- **Initial Submission:** August 3, 2024
+- **Update Submitted:** August 5, 2024
+- **Status:** Update Under Review
+- **Expected Review Time:** 1-2 business days (for updates)
+- **Portal Response:** "Thanks for submitting a dApp update request for the Solana dApp Store."
+
+## 🆕 Version 1.0.2 Update Summary
+
+**Released:** August 5, 2024
+
+**What's New:**
+- ✅ Enhanced privacy policy and legal documentation
+- ✅ Improved store descriptions and feature explanations  
+- ✅ Updated repository URLs and licensing information
+- ✅ Better compliance with dApp Store guidelines
+- ✅ Cleaner, more professional app presentation
+
+**Technical Changes:**
+- Updated versionCode: 2 → 3
+- Updated versionName: "1.0.1" → "1.0.2"
+- New Release NFT: `4z5KrFivQmpkjEEFHTVf1jpqf1X3exC1E8xvzVntjjq7`
+- New APK Hash: `VE1xsPnWF2/z5RhBY9CyNJsNRvskawbnWp2lUBHAoBE=`
 
 ## 💰 Cost Analysis
 
@@ -144,6 +166,7 @@ All app assets have been permanently uploaded to Arweave for decentralized stora
 ## 🏆 Achievement Summary
 
 🎉 **MILESTONE COMPLETED: Successfully published NearMe to Solana dApp Store!**
+🚀 **UPDATE MILESTONE: Version 1.0.2 successfully submitted for review!**
 
 This represents a significant achievement in bringing Web3 payments to mainstream mobile users through the official Solana Mobile ecosystem. The app showcases innovative use of:
 
@@ -153,6 +176,12 @@ This represents a significant achievement in bringing Web3 payments to mainstrea
 - Solana blockchain for fast, low-cost payments
 - NFT rewards for user engagement
 
+**Version 1.0.2 Update Highlights:**
+- Streamlined update process (1-2 business days vs 3-4 for initial)
+- Reused existing assets from Arweave (cost-effective)
+- Enhanced legal compliance and documentation
+- Professional app store presentation
+
 ---
 
-*This release marks NearMe's official entry into the Solana Mobile dApp Store ecosystem, making crypto payments accessible to mainstream users in Bangalore and beyond.*
+*This release and update mark NearMe's mature presence in the Solana Mobile dApp Store ecosystem, with improved compliance and professional presentation making crypto payments accessible to mainstream users in Bangalore and beyond.*

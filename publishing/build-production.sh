@@ -48,11 +48,11 @@ if [ $? -eq 0 ]; then
     echo "   android/app/build/outputs/apk/release/app-release.apk"
     echo ""
     echo "📁 Copying APK to publishing folder..."
-    cp app/build/outputs/apk/release/app-release.apk ../publishing/NearMe-v1.0.0-production.apk
-    echo "   ✅ APK copied to: publishing/NearMe-v1.0.0-production.apk"
+    cp app/build/outputs/apk/release/app-release.apk ../publishing/NearMe-v1.0.2-production.apk
+    echo "   ✅ APK copied to: publishing/NearMe-v1.0.2-production.apk"
     echo ""
     echo "🔍 APK Info:"
-    ls -lh ../publishing/NearMe-v1.0.0-production.apk
+    ls -lh ../publishing/NearMe-v1.0.2-production.apk
 else
     echo "❌ Build failed! Check the output above for errors."
     exit 1

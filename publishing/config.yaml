@@ -6,7 +6,7 @@ app:
   name: NearMe
   address: 5aAgnw5wEDdRXPG1iFDpxDum63e3UmpwiqSBLymEJjqt
   android_package: com.bluntbrain.NearMe
-    urls:
+  urls:
     license_url: https://github.com/Krane-Apps/solana-near-me/blob/main/LICENSE
     copyright_url: https://github.com/Krane-Apps/solana-near-me
     privacy_policy_url: https://github.com/Krane-Apps/solana-near-me/blob/main/docs/privacy-policy.md
@@ -15,7 +15,7 @@ app:
     - purpose: icon
       uri: storeicon.png
 release:
-  address: 56LowjT1m8Pzjgyz4zSA6YXHjjz6hwQhC1oE6yF5fJC4
+  address: 4z5KrFivQmpkjEEFHTVf1jpqf1X3exC1E8xvzVntjjq7
   media:
     - purpose: icon
       uri: storeicon.png
@@ -33,7 +33,7 @@ release:
       uri: ScreenShot_05.png
   files:
     - purpose: install
-      uri: NearMe-v1.0.1-production.apk
+      uri: NearMe-v1.0.2-production.apk
   catalog:
     en-US:
       name: NearMe - Solana Mobile Payment dApp
@@ -162,8 +162,8 @@ solana_mobile_dapp_publisher_portal:
 
     For issues or questions, contact: ishan.lakhwani@gmail.com
 lastSubmittedVersionOnChain:
-  address: 56LowjT1m8Pzjgyz4zSA6YXHjjz6hwQhC1oE6yF5fJC4
-  version_code: 2
-  apk_hash: O2JTdeY8hSekcrzOxI75F21a98alR6VzNlzOW1fiRXY=
+  address: 4z5KrFivQmpkjEEFHTVf1jpqf1X3exC1E8xvzVntjjq7
+  version_code: 3
+  apk_hash: VE1xsPnWF2/z5RhBY9CyNJsNRvskawbnWp2lUBHAoBE=
 lastUpdatedVersionOnStore:
-  address: 56LowjT1m8Pzjgyz4zSA6YXHjjz6hwQhC1oE6yF5fJC4
+  address: 4z5KrFivQmpkjEEFHTVf1jpqf1X3exC1E8xvzVntjjq7

@@ -17,11 +17,13 @@ A React Native mobile application that enables crypto payments at local merchant
 
 ## 🏆 Solana dApp Store Submission
 
-✅ **Status**: Successfully Submitted (Under Review)  
-📅 **Submission Date**: August 3, 2024  
-⏱️ **Expected Review**: 3-4 business days  
-🔗 **App NFT**: [`5aAgnw5wEDdRXPG1iFDpxDum63e3UmpwiqSBLymEJjqt`](https://explorer.solana.com/address/5aAgnw5wEDdRXPG1iFDpxDum63e3UmpwiqSBLymEJjqt?cluster=mainnet)  
-🔗 **Release NFT**: [`56LowjT1m8Pzjgyz4zSA6YXHjjz6hwQhC1oE6yF5fJC4`](https://explorer.solana.com/address/56LowjT1m8Pzjgyz4zSA6YXHjjz6hwQhC1oE6yF5fJC4?cluster=mainnet)
+✅ **Status**: Update Submitted (Under Review)
+📅 **Update Submitted**: August 5, 2024 
+📅 **Initial Submission**: August 3, 2024
+⏱️ **Expected Review**: 1-2 business days (for updates)
+🆕 **Latest Version**: 1.0.2 (versionCode 3)
+🔗 **App NFT**: [`5aAgnw5wEDdRXPG1iFDpxDum63e3UmpwiqSBLymEJjqt`](https://explorer.solana.com/address/5aAgnw5wEDdRXPG1iFDpxDum63e3UmpwiqSBLymEJjqt?cluster=mainnet)
+🔗 **Latest Release NFT**: [`4z5KrFivQmpkjEEFHTVf1jpqf1X3exC1E8xvzVntjjq7`](https://explorer.solana.com/address/4z5KrFivQmpkjEEFHTVf1jpqf1X3exC1E8xvzVntjjq7?cluster=mainnet)
 
 ## 🚀 Features
 
