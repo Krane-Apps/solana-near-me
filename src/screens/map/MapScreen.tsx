@@ -786,7 +786,10 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
     }
 
     // Check if merchant has a wallet address
-    if (!selectedMerchant.walletAddress || selectedMerchant.walletAddress.trim() === '') {
+    if (
+      !selectedMerchant.walletAddress ||
+      selectedMerchant.walletAddress.trim() === ""
+    ) {
       showMessage({
         message: "Merchant Not Verified",
         description: "This merchant hasn't set up their wallet address yet",
@@ -799,8 +802,12 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
     try {
       // Create proper Solana Pay URL according to official specification
       // Format: solana:<recipient>?amount=<amount>&message=<message>&memo=<memo>
-      const solanaPayUrl = `solana:${selectedMerchant.walletAddress}?amount=0.01&message=${encodeURIComponent(`Payment to ${selectedMerchant.name}`)}&memo=${encodeURIComponent(`NearMe-${Date.now()}`)}`;
-      
+      const solanaPayUrl = `solana:${
+        selectedMerchant.walletAddress
+      }?amount=0.01&message=${encodeURIComponent(
+        `Payment to ${selectedMerchant.name}`
+      )}&memo=${encodeURIComponent(`NearMe-${Date.now()}`)}`;
+
       // Wallet-specific deep link options based on official documentation
       const walletOptions = [
         {
@@ -808,22 +815,34 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
           // Primary: Standard Solana Pay protocol
           deepLink: solanaPayUrl,
           // Fallback: Phantom's universal link with encoded Solana Pay URL
-          universalLink: `https://phantom.app/ul/browse/${encodeURIComponent(solanaPayUrl)}`,
+          universalLink: `https://phantom.app/ul/browse/${encodeURIComponent(
+            solanaPayUrl
+          )}`,
           // Alternative: Direct Phantom deeplink
-          nativeDeepLink: `phantom://browse/${encodeURIComponent(solanaPayUrl)}`,
+          nativeDeepLink: `phantom://browse/${encodeURIComponent(
+            solanaPayUrl
+          )}`,
         },
         {
           name: "Solflare",
           deepLink: solanaPayUrl,
-          universalLink: `https://solflare.com/ul/browse/${encodeURIComponent(solanaPayUrl)}`,
-          nativeDeepLink: `solflare://browse/${encodeURIComponent(solanaPayUrl)}`,
+          universalLink: `https://solflare.com/ul/browse/${encodeURIComponent(
+            solanaPayUrl
+          )}`,
+          nativeDeepLink: `solflare://browse/${encodeURIComponent(
+            solanaPayUrl
+          )}`,
         },
         {
           name: "Backpack",
           deepLink: solanaPayUrl,
-          universalLink: `https://backpack.app/ul/browse/${encodeURIComponent(solanaPayUrl)}`,
-          nativeDeepLink: `backpack://browse/${encodeURIComponent(solanaPayUrl)}`,
-        }
+          universalLink: `https://backpack.app/ul/browse/${encodeURIComponent(
+            solanaPayUrl
+          )}`,
+          nativeDeepLink: `backpack://browse/${encodeURIComponent(
+            solanaPayUrl
+          )}`,
+        },
       ];
 
       let walletOpened = false;
@@ -837,11 +856,15 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
           logger.info(FILE_NAME, "Opened with Solana Pay protocol", {
             merchant: selectedMerchant.name,
             walletAddress: selectedMerchant.walletAddress,
-            method: "solana_pay_protocol"
+            method: "solana_pay_protocol",
           });
         }
       } catch (solanaPayError) {
-        logger.warn(FILE_NAME, "Solana Pay protocol failed, trying wallet-specific URLs", solanaPayError);
+        logger.warn(
+          FILE_NAME,
+          "Solana Pay protocol failed, trying wallet-specific URLs",
+          solanaPayError
+        );
       }
 
       // Method 2: Try wallet-specific deep links if Solana Pay failed
@@ -849,35 +872,55 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
         for (const wallet of walletOptions) {
           try {
             // Try native deep link first
-            const canOpenNative = await Linking.canOpenURL(wallet.nativeDeepLink);
+            const canOpenNative = await Linking.canOpenURL(
+              wallet.nativeDeepLink
+            );
             if (canOpenNative) {
               await Linking.openURL(wallet.nativeDeepLink);
               walletOpened = true;
-              logger.info(FILE_NAME, `Opened ${wallet.name} via native deep link`, {
-                merchant: selectedMerchant.name,
-                method: "native_deeplink",
-                wallet: wallet.name
-              });
+              logger.info(
+                FILE_NAME,
+                `Opened ${wallet.name} via native deep link`,
+                {
+                  merchant: selectedMerchant.name,
+                  method: "native_deeplink",
+                  wallet: wallet.name,
+                }
+              );
               break;
             }
           } catch (nativeError) {
-            logger.warn(FILE_NAME, `${wallet.name} native deep link failed`, nativeError);
-            
+            logger.warn(
+              FILE_NAME,
+              `${wallet.name} native deep link failed`,
+              nativeError
+            );
+
             // Try universal link as fallback
             try {
-              const canOpenUniversal = await Linking.canOpenURL(wallet.universalLink);
+              const canOpenUniversal = await Linking.canOpenURL(
+                wallet.universalLink
+              );
               if (canOpenUniversal) {
                 await Linking.openURL(wallet.universalLink);
                 walletOpened = true;
-                logger.info(FILE_NAME, `Opened ${wallet.name} via universal link`, {
-                  merchant: selectedMerchant.name,
-                  method: "universal_link",
-                  wallet: wallet.name
-                });
+                logger.info(
+                  FILE_NAME,
+                  `Opened ${wallet.name} via universal link`,
+                  {
+                    merchant: selectedMerchant.name,
+                    method: "universal_link",
+                    wallet: wallet.name,
+                  }
+                );
                 break;
               }
             } catch (universalError) {
-              logger.warn(FILE_NAME, `${wallet.name} universal link failed`, universalError);
+              logger.warn(
+                FILE_NAME,
+                `${wallet.name} universal link failed`,
+                universalError
+              );
               continue;
             }
           }
@@ -888,7 +931,8 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
         // Show no supported apps message
         showMessage({
           message: "No Supported Apps Found",
-          description: "Please install Phantom, Solflare, or another Solana wallet app to make payments",
+          description:
+            "Please install Phantom, Solflare, or another Solana wallet app to make payments",
           type: "warning",
           duration: 4000,
         });
@@ -1204,12 +1248,17 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
                       <Text style={styles.merchantName}>
                         {selectedMerchant.name}
                       </Text>
-                      {selectedMerchant.walletAddress && selectedMerchant.walletAddress.trim() !== '' && (
-                        <View style={styles.verifiedBadge}>
-                          <Icon name="verified" size={16} color={SolanaColors.status.success} />
-                          <Text style={styles.verifiedText}>Verified</Text>
-                        </View>
-                      )}
+                      {selectedMerchant.walletAddress &&
+                        selectedMerchant.walletAddress.trim() !== "" && (
+                          <View style={styles.verifiedBadge}>
+                            <Icon
+                              name="verified"
+                              size={16}
+                              color={SolanaColors.status.success}
+                            />
+                            <Text style={styles.verifiedText}>Verified</Text>
+                          </View>
+                        )}
                     </View>
                     <Text style={styles.merchantCategory}>
                       {selectedMerchant.category}
@@ -1285,28 +1334,31 @@ const MapScreenContent: React.FC<Props> = React.memo(({ navigation }) => {
                         Directions
                       </Text>
                     </TouchableOpacity>
-                                        <TouchableOpacity
+                    <TouchableOpacity
                       style={[
                         styles.payButton,
-                        (!selectedMerchant.walletAddress || selectedMerchant.walletAddress.trim() === '') && styles.payButtonDisabled
+                        (!selectedMerchant.walletAddress ||
+                          selectedMerchant.walletAddress.trim() === "") &&
+                          styles.payButtonDisabled,
                       ]}
                       onPress={handlePayPress}
                       activeOpacity={0.7}
                     >
                       <Icon
                         name={
-                          selectedMerchant.walletAddress && selectedMerchant.walletAddress.trim() !== '' 
-                            ? "payment" 
+                          selectedMerchant.walletAddress &&
+                          selectedMerchant.walletAddress.trim() !== ""
+                            ? "payment"
                             : "error_outline"
                         }
                         size={20}
                         color={SolanaColors.white}
                       />
                       <Text style={styles.payButtonText}>
-                        {selectedMerchant.walletAddress && selectedMerchant.walletAddress.trim() !== '' 
-                          ? "Pay Now" 
-                          : "Not Verified"
-                        }
+                        {selectedMerchant.walletAddress &&
+                        selectedMerchant.walletAddress.trim() !== ""
+                          ? "Pay Now"
+                          : "Not Verified"}
                       </Text>
                     </TouchableOpacity>
                   </View>

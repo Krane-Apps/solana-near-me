@@ -6,11 +6,11 @@ app:
   name: NearMe
   address: 5aAgnw5wEDdRXPG1iFDpxDum63e3UmpwiqSBLymEJjqt
   android_package: com.bluntbrain.NearMe
-  urls:
+    urls:
     license_url: https://github.com/Krane-Apps/solana-near-me/blob/main/LICENSE
-copyright_url: https://github.com/Krane-Apps/solana-near-me
-privacy_policy_url: https://github.com/Krane-Apps/solana-near-me/blob/main/docs/privacy-policy.md
-website: https://github.com/Krane-Apps/solana-near-me
+    copyright_url: https://github.com/Krane-Apps/solana-near-me
+    privacy_policy_url: https://github.com/Krane-Apps/solana-near-me/blob/main/docs/privacy-policy.md
+    website: https://github.com/Krane-Apps/solana-near-me
   media:
     - purpose: icon
       uri: storeicon.png
@@ -37,69 +37,51 @@ release:
   catalog:
     en-US:
       name: NearMe - Solana Mobile Payment dApp
-      short_description: Solana payments & rewards
+      short_description: Google Maps for Solana
       long_description: |
-        NearMe is a revolutionary React Native mobile application that enables seamless crypto payments at local merchants using Solana blockchain technology. Built for the Solana Mobile Hackathon, this app bridges the gap between traditional commerce and decentralized payments.
+        Solana Near Me is like Google Maps, but for Solana. It helps users discover nearby Solana merchants and pay them directly via a mobile app. Today, merchants want to accept crypto but can't reach users, and users don't know where to spend it—this app solves that disconnect.
 
-        🚀 Key Features:
-        • Interactive Map: Discover crypto-accepting merchants in Bangalore with real-time location services
-        • Solana Payments: Pay with SOL or USDC using Mobile Wallet Adapter for secure transactions
-        • Real-time Conversion: Live SOL/USDC to USD exchange rates for informed payments
-        • Rewards System: Earn 1% cashback in SOL for all transactions automatically
-        • NFT Badges: Collect achievement-based NFT rewards for milestones
-        • Solana Pay Integration: Standard compliant QR code generation and payment processing
-        • Dark Theme: Professional Solana-branded UI with purple theme
+        🗺️ Key Features:
+        • Map-like UI to find and navigate to local Solana merchants
+        • 7,000+ merchants live at launch
+        • Referral rewards to drive growth
+        • Native Solana Pay support—no browser wallet needed
+        • Verified proof-of-location merchants
+        • Built-in swaps and onramps via Jupiter, MoonPay
+        • One-tap merchant signup using Google Maps URL
+        • Merchant NFT badges for reputation
+        • Fast, cheap payments using Solana's speed and low fees
+        • Fully Solana-native, built for mobile
 
-        🛠️ Technical Stack:
-        • React Native with Expo for cross-platform development
-        • TypeScript for enhanced code reliability
-        • Mobile Wallet Adapter for native wallet integration
-        • Solana Web3.js for blockchain interactions
-        • Firebase Realtime Database for optimized merchant data (98%+ cost savings)
-        • React Native Maps for location services
-        • Real Solana Pay transactions (no mocks)
+        🚀 Launch, explore, and pay with Solana: effortlessly.
 
-        🏗️ Architecture Highlights:
-        • Ultra-efficient data flow with Firebase Realtime Database
-        • Only 1 Firebase read per session vs 6,993 reads with traditional approach
-        • 99.8% cost reduction in data operations
-        • Instant offline support and 14ms filtering performance
-        • Multi-token support (SOL and USDC) with automatic account creation
-
-        This app demonstrates the future of mobile commerce on Solana, providing users with a seamless way to discover and pay at local merchants while earning rewards in the process.
+        Built with React Native and Mobile Wallet Adapter for seamless crypto payments at local merchants. Uses Firebase Realtime Database for instant merchant discovery and supports both SOL and USDC transactions with real-time exchange rates.
       new_in_version: |
-        Version 1.0.1 - Production release for Solana dApp Store
-        Initial release of NearMe - Solana Mobile Payment dApp
+        First release of NearMe - find and pay Solana merchants near you.
 
-        ✨ What's New:
-        • Interactive map with crypto-accepting merchants in Bangalore
-        • Secure Solana payments using Mobile Wallet Adapter
-        • Support for both SOL and USDC transactions
-        • 1% SOL cashback rewards system
-        • NFT achievement badges
-        • Real-time currency conversion
-        • Professional Solana-branded dark theme
-        • Optimized Firebase backend for 99.8% cost reduction
-        • Offline support and instant merchant filtering
+        ✨ What's included:
+        • Map with 7,000+ Solana merchants
+        • Pay with SOL or USDC via mobile wallet
+        • Get 1% SOL rewards on all payments
+        • Instant merchant search and filtering
+        • Dark purple Solana theme
       saga_features: |
-        NearMe leverages Solana Mobile Stack features for an enhanced mobile Web3 experience:
+        Built for Solana Mobile with native wallet integration:
 
-        🔐 Mobile Wallet Adapter Integration:
-        • Secure transaction signing with native mobile wallets
-        • Seamless connection with Phantom, Solflare, and other MWA-compatible wallets
-        • No private keys stored in app for maximum security
+        📱 Mobile Wallet Adapter:
+        • Connect any Solana wallet (Phantom, Solflare, etc.)
+        • Sign transactions securely without sharing private keys
+        • One-tap wallet connection
 
-        💰 Solana Pay Implementation:
-        • Standard-compliant payment processing
-        • QR code generation for merchant payments
-        • Multi-token support (SOL, USDC)
-        • Transaction validation and confirmation
+        💳 Solana Pay:
+        • Pay merchants with SOL or USDC
+        • Generate QR codes for payments
+        • Fast, cheap transactions
 
-        🎯 Optimized for Solana Mobile:
-        • Native Android development with proper Solana Mobile SDKs
-        • Firebase integration for real-time merchant data
-        • Location-based services for merchant discovery
-        • Rewards system built on Solana blockchain
+        🗺️ Mobile-First Design:
+        • Native Android app with smooth performance
+        • GPS location for finding nearby merchants
+        • Works offline after first load
 solana_mobile_dapp_publisher_portal:
   testing_instructions: |
     NearMe - Solana Mobile Payment dApp Testing Instructions
