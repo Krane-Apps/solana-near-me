@@ -15,7 +15,7 @@ app:
     - purpose: icon
       uri: storeicon.png
 release:
-  address: 4z5KrFivQmpkjEEFHTVf1jpqf1X3exC1E8xvzVntjjq7
+  address: Bmf2uuF7Gat3TsMqXpECspM3ZXoi92ZmSyKBDwSoKxZC
   media:
     - purpose: icon
       uri: storeicon.png
@@ -33,7 +33,7 @@ release:
       uri: ScreenShot_05.png
   files:
     - purpose: install
-      uri: NearMe-v1.0.2-production.apk
+      uri: NearMe-v1.0.3-production.apk
   catalog:
     en-US:
       name: NearMe - Solana Mobile Payment dApp
@@ -57,14 +57,13 @@ release:
 
         Built with React Native and Mobile Wallet Adapter for seamless crypto payments at local merchants. Uses Firebase Realtime Database for instant merchant discovery and supports both SOL and USDC transactions with real-time exchange rates.
       new_in_version: |
-        First release of NearMe - find and pay Solana merchants near you.
+        Version 1.0.3 - Updated legal documentation and store compliance.
 
-        ✨ What's included:
-        • Map with 7,000+ Solana merchants
-        • Pay with SOL or USDC via mobile wallet
-        • Get 1% SOL rewards on all payments
-        • Instant merchant search and filtering
-        • Dark purple Solana theme
+        ✨ What's new in this update:
+        • Fixed repository URLs to use correct branch
+        • Enhanced copyright and legal documentation
+        • Improved store compliance and app presentation
+        • Better documentation structure for store guidelines
       saga_features: |
         Built for Solana Mobile with native wallet integration:
 
@@ -162,8 +161,8 @@ solana_mobile_dapp_publisher_portal:
 
     For issues or questions, contact: ishan.lakhwani@gmail.com
 lastSubmittedVersionOnChain:
-  address: 4z5KrFivQmpkjEEFHTVf1jpqf1X3exC1E8xvzVntjjq7
-  version_code: 3
-  apk_hash: VE1xsPnWF2/z5RhBY9CyNJsNRvskawbnWp2lUBHAoBE=
+  address: Bmf2uuF7Gat3TsMqXpECspM3ZXoi92ZmSyKBDwSoKxZC
+  version_code: 4
+  apk_hash: HOneNGguunANX7421mHAvynWGh8R93Ld2H8OmZP6W9k=
 lastUpdatedVersionOnStore:
-  address: 4z5KrFivQmpkjEEFHTVf1jpqf1X3exC1E8xvzVntjjq7
+  address: Bmf2uuF7Gat3TsMqXpECspM3ZXoi92ZmSyKBDwSoKxZC

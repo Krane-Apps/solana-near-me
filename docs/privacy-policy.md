@@ -1,6 +1,6 @@
 # Privacy Policy for NearMe
 
-**Last updated: January 2024**
+**Last updated: August 2025**
 
 ## Information We Collect
 
@@ -38,6 +38,6 @@ NearMe collects minimal data to provide crypto payment services:
 
 ## Contact
 
-For privacy questions: ishan.lakhwani@gmail.com
+For privacy questions: hello@kraneapps.com
 
 This policy may be updated. Continued use constitutes acceptance of changes.

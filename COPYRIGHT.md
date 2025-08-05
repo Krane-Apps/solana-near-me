@@ -2,7 +2,7 @@
 
 ## NearMe - Solana Mobile Payment dApp
 
-**Copyright © 2024 Ishan Lakhwani**
+**Copyright © 2025 Ishan Lakhwani**
 
 All rights reserved under the MIT License.
 
@@ -18,4 +18,4 @@ All rights reserved under the MIT License.
 - Mobile Wallet Adapter
 - Solana Web3.js
 
-For licensing inquiries: ishan.lakhwani@gmail.com
+For licensing inquiries: hello@kraneapps.com
