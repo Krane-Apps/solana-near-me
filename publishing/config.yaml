@@ -8,7 +8,7 @@ app:
   android_package: com.bluntbrain.NearMe
   urls:
     license_url: https://github.com/Krane-Apps/solana-near-me/blob/master/LICENSE
-    copyright_url: https://github.com/Krane-Apps/solana-near-me
+    copyright_url: https://github.com/Krane-Apps/solana-near-me/blob/master/COPYRIGHT.md
     privacy_policy_url: https://github.com/Krane-Apps/solana-near-me/blob/master/docs/privacy-policy.md
     website: https://github.com/Krane-Apps/solana-near-me
   media:
