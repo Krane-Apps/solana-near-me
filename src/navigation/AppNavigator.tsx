@@ -13,7 +13,8 @@ import { logger } from "../lib/utils/logger";
 
 // Import screens from their new locations using index files
 import WelcomeScreen from "../screens/welcome";
-import { MapScreen, MerchantListScreen } from "../screens/map";
+import { MapScreen, Map3DScreen, MerchantListScreen } from "../screens/map";
+import Map3DScreenWrapper from "../screens/map/Map3DScreenWrapper";
 import { PaymentScreen, PaymentSuccessScreen } from "../screens/payment";
 import MerchantRegistrationScreen from "../screens/merchant";
 import { UserProfileScreen } from "../screens/profile";
@@ -105,12 +106,12 @@ function MainTabNavigator() {
 
       <Tab.Screen
         name="Map"
-        component={MapScreen}
+        component={Map3DScreenWrapper}
         options={{
           tabBarIcon: ({ color, size }: { color: string; size: number }) => (
             <Icon name="map" size={size} color={color} />
           ),
-          tabBarLabel: "Map",
+          tabBarLabel: "3D Map",
         }}
       />
 

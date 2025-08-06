@@ -40,7 +40,7 @@ export const UI_CONSTANTS = {
     latitudeDelta: 0.1,
     longitudeDelta: 0.1,
   },
-  SEARCH_PLACEHOLDER: 'Search merchants...',
+  SEARCH_PLACEHOLDER: 'Search ...',
   CARD: {
     BORDER_RADIUS: 12,
     SHADOW_OPACITY: 0.1,

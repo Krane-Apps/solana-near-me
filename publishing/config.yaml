@@ -33,7 +33,7 @@ release:
       uri: ScreenShot_05.png
   files:
     - purpose: install
-      uri: NearMe-v1.0.3-production.apk
+      uri: NearMe-v1.0.6-production.apk
   catalog:
     en-US:
       name: NearMe - Solana Mobile Payment dApp
@@ -57,13 +57,15 @@ release:
 
         Built with React Native and Mobile Wallet Adapter for seamless crypto payments at local merchants. Uses Firebase Realtime Database for instant merchant discovery and supports both SOL and USDC transactions with real-time exchange rates.
       new_in_version: |
-        Version 1.0.3 - Updated legal documentation and store compliance.
+        Version 1.0.6 - Enhanced 3D mapping experience and improved performance.
 
         ✨ What's new in this update:
-        • Fixed repository URLs to use correct branch
-        • Enhanced copyright and legal documentation
-        • Improved store compliance and app presentation
-        • Better documentation structure for store guidelines
+        • Revolutionary 3D map interface with Mapbox GL
+        • Enhanced marker clustering for better performance with 7000+ merchants
+        • Improved zoom controls and 3D earth visualization
+        • Better user location tracking and navigation
+        • Optimized performance for large datasets
+        • Enhanced dark mode with Solana branding colors
       saga_features: |
         Built for Solana Mobile with native wallet integration:
 
